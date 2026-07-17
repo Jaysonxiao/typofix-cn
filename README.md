@@ -5,9 +5,7 @@ Typofix CN 是一个本机优先的中文 DOCX 文档校验工具：同一套 Py
 ## 快速开始
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 开发前端并启动本地 Web：
@@ -17,7 +15,7 @@ cd frontend
 npm install
 npm run build
 cd ..
-typofix serve --data-dir .\data
+uv run typofix serve --data-dir .\data
 ```
 
 浏览器打开 <http://127.0.0.1:8000/>。如果没有构建 `frontend/dist`，后端仍可作为纯 API 服务运行。
@@ -25,17 +23,17 @@ typofix serve --data-dir .\data
 仅规则校验不需要下载模型。完整校验首次使用前下载 MacBERT：
 
 ```powershell
-python -m pip install -e ".[model]"
-typofix model download --data-dir .\data
+uv sync --extra model
+uv run typofix model download --data-dir .\data
 ```
 
 ## CLI
 
 ```powershell
-typofix check .\论文.docx --rules-only --data-dir .\data
-typofix check .\论文目录 --term-lib default --data-dir .\data
-typofix terms list --data-dir .\data
-typofix terms add default "项目专用术语" --data-dir .\data
+uv run typofix check .\论文.docx --rules-only --data-dir .\data
+uv run typofix check .\论文目录 --term-lib default --data-dir .\data
+uv run typofix terms list --data-dir .\data
+uv run typofix terms add default "项目专用术语" --data-dir .\data
 ```
 
 `check` 会输出 JSON 和离线 HTML 报告路径；`--verbose` 才显示内部子类型。默认用户界面只展示五个错误父类：文字纠错、标点与字符、段落与版式、结构与编号、引用与参考文献。
@@ -59,8 +57,8 @@ data/
 ## 测试
 
 ```powershell
-$env:PYTHONPATH = "backend/src;cli/src"
-python -m pytest backend/tests cli/tests -q -m "not model" --basetemp .pytest-tmp
+$env:PYTEST_ADDOPTS = "--basetemp .pytest-tmp"
+uv run pytest backend/tests cli/tests -q -m "not model"
 cd frontend
 npm test -- --run
 npm run build

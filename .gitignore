@@ -2,6 +2,7 @@
 .venv/
 .pytest_cache/
 .pytest-tmp/
+.uv-cache/
 .coverage
 htmlcov/
 __pycache__/
@@ -11,6 +12,7 @@ frontend/dist/
 frontend/playwright-report/
 frontend/test-results/
 *.tsbuildinfo
+*.egg-info/
 data/jobs/
 data/models/
 data/term-libraries/*.txt
