@@ -1,6 +1,7 @@
 .worktrees/
 .venv/
 .pytest_cache/
+.pytest-tmp/
 .coverage
 htmlcov/
 __pycache__/
@@ -9,6 +10,7 @@ frontend/node_modules/
 frontend/dist/
 frontend/playwright-report/
 frontend/test-results/
+*.tsbuildinfo
 data/jobs/
 data/models/
 data/term-libraries/*.txt

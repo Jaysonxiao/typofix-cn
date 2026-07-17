@@ -1,0 +1,38 @@
+from pathlib import Path
+
+from platformdirs import user_data_path
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="TYPOFIX_", extra="ignore")
+
+    data_dir: Path = Field(default_factory=lambda: Path(user_data_path("TypofixCN")))
+    host: str = "127.0.0.1"
+    port: int = Field(default=8000, ge=1, le=65535)
+    model_name: str = "shibing624/macbert4csc-base-chinese"
+    max_file_bytes: int = Field(default=50 * 1024 * 1024, gt=0)
+    max_batch_files: int = Field(default=100, gt=0)
+    max_expanded_bytes: int = Field(default=200 * 1024 * 1024, gt=0)
+    frontend_dir: Path | None = None
+
+    @property
+    def jobs_dir(self) -> Path:
+        return self.data_dir / "jobs"
+
+    @property
+    def models_dir(self) -> Path:
+        return self.data_dir / "models"
+
+    @property
+    def term_libraries_dir(self) -> Path:
+        return self.data_dir / "term-libraries"
+
+    def ensure_directories(self) -> None:
+        self.jobs_dir.mkdir(parents=True, exist_ok=True)
+        self.models_dir.mkdir(parents=True, exist_ok=True)
+        self.term_libraries_dir.mkdir(parents=True, exist_ok=True)
+        default_library = self.term_libraries_dir / "default.txt"
+        if not default_library.exists():
+            default_library.write_text("", encoding="utf-8")
