@@ -17,6 +17,7 @@ from typofix_cn.jobs.repository import JobRepository
 from typofix_cn.reports.html_report import HtmlReportWriter
 from typofix_cn.reports.json_report import JsonReportWriter
 from typofix_cn.terms.repository import TextTermRepository
+from typofix_cn.api.routes.terms import build_terms_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -53,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.jobs = jobs
     app.state.terms = terms
+    app.include_router(build_terms_router())
 
     @app.get("/api/v1/health")
     def health():
