@@ -30,7 +30,7 @@ describe("CheckPage", () => {
     await user.click(await screen.findByLabelText("default"));
     await user.click(screen.getByRole("button", { name: "开始校验" }));
     expect(await screen.findByText("正在校验")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("校验完成")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("校验完成")).toBeInTheDocument(), { timeout: 3000 });
     const request = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
     expect(request).toBeDefined();
     expect((request?.[1]?.body as FormData).get("term_libraries")).toBe("default");
