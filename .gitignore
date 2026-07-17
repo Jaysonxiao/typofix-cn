@@ -1,0 +1,15 @@
+.worktrees/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+__pycache__/
+*.py[cod]
+frontend/node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
+data/jobs/
+data/models/
+data/term-libraries/*.txt
+!data/term-libraries/.gitkeep
