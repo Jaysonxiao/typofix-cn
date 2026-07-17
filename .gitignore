@@ -1,6 +1,7 @@
 .worktrees/
 .venv/
 .pytest_cache/
+.pytest-tmp/
 .coverage
 htmlcov/
 __pycache__/
