@@ -1,4 +1,4 @@
-import type { JobCreated, JobSummary, TermLibrary } from "../types";
+import type { AnalysisReport, JobCreated, JobSummary, TermLibrary } from "../types";
 
 const API_ROOT = "/api/v1";
 
@@ -25,4 +25,14 @@ export function createJob(files: File[], libraries: string[], mode: "full" | "ru
 
 export function getJob(jobId: string): Promise<JobSummary> {
   return request<JobSummary>(`/jobs/${encodeURIComponent(jobId)}`);
+}
+
+export function getReport(jobId: string): Promise<AnalysisReport> {
+  return request<AnalysisReport>(`/jobs/${encodeURIComponent(jobId)}/report.json`);
+}
+
+export async function addTermAndRematch(jobId: string, library: string, term: string): Promise<AnalysisReport> {
+  await request(`/term-libraries/${encodeURIComponent(library)}/terms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ term }) });
+  await request(`/jobs/${encodeURIComponent(jobId)}/rematch`, { method: "POST" });
+  return getReport(jobId);
 }
