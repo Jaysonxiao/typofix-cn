@@ -31,4 +31,6 @@ def test_report_outputs_versioned_json_and_safe_offline_html(tmp_path) -> None:
     assert payload["schema_version"] == 1
     assert "<script>alert(1)</script>" not in html
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+    assert "文字纠错" in html
+    assert "TEXT_CORRECTION</h2>" not in html
     assert "fetch(" not in html

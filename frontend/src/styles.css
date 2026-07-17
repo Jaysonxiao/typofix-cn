@@ -13,6 +13,10 @@ button { cursor: pointer; }
 
 .check-page { max-width: 1180px; margin: 0 auto; padding: 40px 28px 72px; }
 .hero-panel { padding: 36px 0 42px; border-bottom: 1px solid #d9e0e5; }
+.topline { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.top-nav { display: flex; gap: 18px; }
+.top-nav a { color: #596878; font-size: .88rem; text-decoration: none; }
+.top-nav a:hover { color: #d95645; }
 .kicker, .eyebrow, .quiet-label { color: #1c8c82; font: 700 0.72rem/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
 .hero-panel h1 { max-width: 720px; margin: 14px 0 16px; color: #132238; font: 600 clamp(2.7rem, 7vw, 5.8rem)/.98 "Noto Serif SC", "Songti SC", serif; letter-spacing: -.055em; }
 .hero-copy { max-width: 590px; margin: 0; color: #596878; font-size: 1rem; line-height: 1.8; }
@@ -44,6 +48,7 @@ input[type="radio"], input[type="checkbox"] { accent-color: #1c8c82; margin-righ
 .job-status.is-running .status-dot { animation: pulse 1.4s ease-in-out infinite; }
 .job-status strong, .job-status small { display: block; }
 .job-status small { margin-top: 3px; color: #596878; }
+.job-report-link { display: inline-block; margin-top: 8px; color: #176d66; font-size: .82rem; font-weight: 700; text-decoration: none; }
 .error-copy { color: #b63f32; }
 
 .report-page { max-width: 1180px; margin: 0 auto; padding: 40px 28px 72px; }
@@ -65,6 +70,7 @@ input[type="radio"], input[type="checkbox"] { accent-color: #1c8c82; margin-righ
 .issue-row { padding: 20px 22px 18px; border: 1px solid #e1b0a9; border-left: 4px solid #d95645; background: #fff; box-shadow: 6px 6px 0 rgba(217, 86, 69, .06); }
 .issue-row.is-suppressed { border-color: #acd8d1; border-left-color: #1c8c82; background: #fbfefd; box-shadow: 6px 6px 0 rgba(28, 140, 130, .05); }
 .issue-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 9px 14px; margin-bottom: 15px; color: #596878; font-size: .82rem; }
+.issue-location { margin: -7px 0 13px; color: #8997a3; font: .76rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; }
 .category-pill { padding: 5px 8px; background: #fcebe8; color: #a94236; font-weight: 700; }
 .issue-row.is-suppressed .category-pill { background: #dff2ee; color: #176d66; }
 .issue-context { padding: 15px 16px; border: 1px solid #eef1ef; background: #f7f8f4; color: #25384d; font-family: "Noto Serif SC", "Songti SC", serif; font-size: 1.08rem; line-height: 1.8; user-select: text; }

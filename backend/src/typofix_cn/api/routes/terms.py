@@ -61,9 +61,13 @@ def build_terms_router() -> APIRouter:
     @router.post("/jobs/{job_id}/rematch")
     def rematch(job_id: str, request: Request):
         jobs = request.app.state.jobs
-        manifest = jobs.get(job_id)
-        json_path = jobs.job_dir(job_id) / "report.json"
-        html_path = jobs.job_dir(job_id) / "report.html"
+        try:
+            manifest = jobs.get(job_id)
+            job_dir = jobs.existing_job_dir(job_id)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail={"code": "JOB_NOT_FOUND", "message": "任务不存在"})
+        json_path = job_dir / "report.json"
+        html_path = job_dir / "report.html"
         libraries = {name: request.app.state.terms.load(name).terms for name in manifest.selected_libraries}
         report = RematchService().rematch(json_path, html_path, libraries)
         return {"job_id": job_id, "summary": report.summary.model_dump(mode="json")}

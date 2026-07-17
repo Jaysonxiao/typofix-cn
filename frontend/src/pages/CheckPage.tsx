@@ -38,7 +38,7 @@ export function CheckPage() {
   return (
     <main className="check-page">
       <section className="hero-panel">
-        <p className="kicker">TYPOfix / 中文文档校验</p>
+        <div className="topline"><p className="kicker">TYPOfix / 中文文档校验</p><nav className="top-nav"><a href="/history">历史任务</a><a href="/terms">术语库</a></nav></div>
         <h1>把论文里的小毛刺，留在交稿前。</h1>
         <p className="hero-copy">上传 DOCX，先看真正值得处理的问题。术语豁免会被保留，也会和待处理项清楚分开。</p>
       </section>

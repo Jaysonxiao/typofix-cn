@@ -39,3 +39,12 @@ def test_partial_term_overlap_does_not_suppress() -> None:
     matcher = TermMatcher({"default": ["麒麟操做系统"]})
     issue = _issue(IssueSource.MODEL, "SPELLING_TYPO", 1, 3)
     assert matcher.apply([issue])[0].status == "actionable"
+
+
+def test_sentence_relative_context_still_suppresses_with_paragraph_offset() -> None:
+    issue = _issue(IssueSource.MODEL, "SPELLING_TYPO", 6, 7).model_copy(update={
+        "location": TextLocation(document_path="论文.docx", region="body", paragraph_index=0, sentence_index=1, start_offset=6, end_offset=7),
+        "original": "做",
+        "context": "第一句。麒麟操做系统。",
+    })
+    assert TermMatcher({"default": ["麒麟操做系统"]}).apply([issue])[0].status == "term_suppressed"

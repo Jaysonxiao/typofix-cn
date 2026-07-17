@@ -17,10 +17,10 @@ def block(*, role: str = "body", indent: float | None = None, text: str = "è¿™æ˜
     )
 
 
-def context(item: ExtractedBlock) -> RuleContext:
+def context(item: ExtractedBlock, sentence_index: int = 0) -> RuleContext:
     from typofix_cn.documents.sentences import SentenceSpan
 
-    return RuleContext(block=item, sentence=SentenceSpan(index=0, text=item.text, start=0, end=len(item.text)))
+    return RuleContext(block=item, sentence=SentenceSpan(index=sentence_index, text=item.text, start=0, end=len(item.text)))
 
 
 def test_body_without_indent_is_reported() -> None:
@@ -43,6 +43,10 @@ def test_heading_list_and_table_do_not_require_indent() -> None:
 def test_indent_outlier_is_reported_against_expected_value() -> None:
     issues = FirstLineIndentRule(expected_indent_pt=24).check(context(block(indent=12)))
     assert [issue.type_code for issue in issues] == ["FIRST_LINE_INDENT_INVALID"]
+
+
+def test_indent_is_checked_once_per_paragraph() -> None:
+    assert FirstLineIndentRule().check(context(block(indent=0), sentence_index=1)) == []
 
 
 def test_style_profile_finds_one_outlier_after_dominant_body_style() -> None:

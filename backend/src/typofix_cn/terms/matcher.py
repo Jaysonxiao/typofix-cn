@@ -13,9 +13,12 @@ class TermMatcher:
         for issue in issues:
             hits = self._find_hits(issue.context)
             can_suppress = issue.source == IssueSource.MODEL and issue.type_code == "SPELLING_TYPO"
-            start = issue.location.start_offset
-            end = issue.location.end_offset
-            suppressed = can_suppress and any(hit.start_offset <= start and end <= hit.end_offset for hit in hits)
+            original_start = issue.context.find(issue.original) if issue.original else -1
+            original_end = original_start + len(issue.original) if original_start >= 0 else -1
+            if original_start >= 0 and 0 <= issue.location.start_offset <= len(issue.context) and issue.location.start_offset != original_start:
+                original_start = issue.location.start_offset
+                original_end = original_start + len(issue.original)
+            suppressed = can_suppress and original_start >= 0 and any(hit.start_offset <= original_start and original_end <= hit.end_offset for hit in hits)
             result.append(
                 issue.model_copy(
                     update={

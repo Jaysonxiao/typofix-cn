@@ -17,7 +17,10 @@ export function listTermLibraries(): Promise<TermLibrary[]> {
 
 export function createJob(files: File[], libraries: string[], mode: "full" | "rules_only"): Promise<JobCreated> {
   const body = new FormData();
-  files.forEach((file) => body.append("files", file, file.name));
+  files.forEach((file) => {
+    const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
+    body.append("files", file, relativePath);
+  });
   body.set("term_libraries", libraries.join(","));
   body.set("mode", mode);
   return request<JobCreated>("/jobs", { method: "POST", body });

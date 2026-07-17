@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     max_file_bytes: int = Field(default=50 * 1024 * 1024, gt=0)
     max_batch_files: int = Field(default=100, gt=0)
     max_expanded_bytes: int = Field(default=200 * 1024 * 1024, gt=0)
+    frontend_dir: Path | None = None
 
     @property
     def jobs_dir(self) -> Path:

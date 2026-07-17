@@ -34,6 +34,7 @@ class AnalysisService:
         self,
         paths: Sequence[Path],
         *,
+        relative_paths: Sequence[str] | None = None,
         selected_libraries: Sequence[str] = (),
         mode: str = "full",
         job_id: str = "local",
@@ -42,15 +43,18 @@ class AnalysisService:
         all_issues: list[Issue] = []
         documents: list[DocumentResult] = []
         total = len(paths)
-        for index, path in enumerate(paths, start=1):
+        display_paths = list(relative_paths) if relative_paths is not None else [path.name for path in paths]
+        if len(display_paths) != len(paths):
+            raise ValueError("relative_paths must match paths")
+        for index, (path, display_path) in enumerate(zip(paths, display_paths, strict=True), start=1):
             try:
-                blocks = self.reader.read(path, relative_path=path.name)
+                blocks = self.reader.read(path, relative_path=display_path)
                 issues = self._analyze_blocks(blocks, mode=mode)
                 issues = self._deduplicate(issues)
                 all_issues.extend(issues)
-                documents.append(DocumentResult(document_path=path.name, status="completed", issue_ids=[item.issue_id for item in issues]))
+                documents.append(DocumentResult(document_path=display_path, status="completed", issue_ids=[item.issue_id for item in issues]))
             except Exception as exc:
-                documents.append(DocumentResult(document_path=path.name, status="failed", failure=str(exc)))
+                documents.append(DocumentResult(document_path=display_path, status="failed", failure=str(exc)))
             if progress:
                 progress(index, total, "analysis")
         selected = {name: self.term_libraries[name] for name in selected_libraries if name in self.term_libraries}
@@ -74,6 +78,12 @@ class AnalysisService:
         issues.extend(StructureRuleSet().check_document(blocks))
         issues.extend(AcademicReferenceRuleSet().check_document(blocks))
         if mode == "full":
+            sentence_map = {
+                f"{block.paragraph_index}:{sentence.index}": (block, sentence)
+                for block in blocks
+                for sentence in split_sentences(block.text)
+                if sentence.text.strip()
+            }
             inputs = [
                 CorrectionInput(key=f"{block.paragraph_index}:{sentence.index}", text=sentence.text)
                 for block in blocks
@@ -82,7 +92,7 @@ class AnalysisService:
             ]
             for result in self.corrector.correct(inputs):
                 paragraph_index, sentence_index = (int(value) for value in result.key.split(":", 1))
-                block = next(item for item in blocks if item.paragraph_index == paragraph_index)
+                block, sentence = sentence_map[result.key]
                 for finding in result.findings:
                     issues.append(
                         Issue.create(
@@ -95,8 +105,8 @@ class AnalysisService:
                                 "region": block.region,
                                 "paragraph_index": paragraph_index,
                                 "sentence_index": sentence_index,
-                                "start_offset": finding.start,
-                                "end_offset": finding.end,
+                                "start_offset": sentence.start + finding.start,
+                                "end_offset": sentence.start + finding.end,
                                 "table": block.table,
                             },
                             original=finding.original,

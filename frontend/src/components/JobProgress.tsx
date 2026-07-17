@@ -10,6 +10,7 @@ export function JobProgress({ job }: { job: JobSummary | null }) {
       <div>
         <strong>{finished ? "校验完成" : failed ? "校验未完成" : "正在校验"}</strong>
         <small>{failed ? job.error ?? "请检查任务详情" : `${job.processed_documents}/${job.total_documents} 个文档 · ${job.phase}`}</small>
+        {finished && <a className="job-report-link" href={`/jobs/${job.job_id}`}>打开问题清单 ↗</a>}
       </div>
     </div>
   );

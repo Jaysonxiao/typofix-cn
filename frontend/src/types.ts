@@ -30,11 +30,12 @@ export interface JobCreated {
 }
 
 export type IssueCategory = "TEXT_CORRECTION" | "PUNCTUATION_CHARACTER" | "PARAGRAPH_LAYOUT" | "STRUCTURE_NUMBERING" | "CITATION_REFERENCE";
+export type IssueSource = "model" | "rule";
 export type IssueStatus = "actionable" | "term_suppressed";
 
 export interface Issue {
   issue_id: string;
-  source: "model" | "rule";
+  source: IssueSource;
   category: IssueCategory;
   type_code: string;
   severity: "error" | "warning" | "info";

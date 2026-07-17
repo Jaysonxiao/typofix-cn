@@ -24,13 +24,13 @@ def _settings(data_dir: Path | None) -> Settings:
     return settings
 
 
-def _collect(paths: list[Path]) -> list[Path]:
-    result: list[Path] = []
+def _collect(paths: list[Path]) -> list[tuple[Path, str]]:
+    result: list[tuple[Path, str]] = []
     for path in paths:
         if path.is_file() and path.suffix.lower() == ".docx" and not path.name.startswith("~$"):
-            result.append(path)
+            result.append((path, path.name))
         elif path.is_dir():
-            result.extend(item for item in sorted(path.rglob("*.docx")) if not item.name.startswith("~$"))
+            result.extend((item, item.relative_to(path).as_posix()) for item in sorted(path.rglob("*.docx")) if not item.name.startswith("~$"))
     if not result:
         raise typer.BadParameter("没有找到 DOCX 文件")
     return result
@@ -45,12 +45,14 @@ def check(
     verbose: bool = typer.Option(False, "--verbose"),
 ) -> None:
     settings = _settings(data_dir)
-    input_paths = _collect(paths)
+    selected_paths = _collect(paths)
+    input_paths = [item[0] for item in selected_paths]
+    relative_paths = [item[1] for item in selected_paths]
     repository = TextTermRepository(settings.term_libraries_dir)
     libraries = {name: repository.load(name).terms for name in term_lib}
     corrector = FakeCorrector({}) if rules_only else MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese")
-    report = AnalysisService(corrector=corrector, term_libraries=libraries, model_name=settings.model_name).analyze(input_paths, selected_libraries=term_lib, mode="rules_only" if rules_only else "full")
-    job = JobRepository(settings.data_dir).create([path.name for path in input_paths], mode=report.mode, libraries=term_lib)
+    report = AnalysisService(corrector=corrector, term_libraries=libraries, model_name=settings.model_name).analyze(input_paths, relative_paths=relative_paths, selected_libraries=term_lib, mode="rules_only" if rules_only else "full")
+    job = JobRepository(settings.data_dir).create(relative_paths, mode=report.mode, libraries=term_lib)
     job_dir = JobRepository(settings.data_dir).job_dir(job.job_id)
     json_path = job_dir / "report.json"
     html_path = job_dir / "report.html"

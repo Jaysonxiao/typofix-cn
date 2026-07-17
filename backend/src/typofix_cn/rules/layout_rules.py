@@ -11,7 +11,7 @@ class FirstLineIndentRule:
         self.expected_indent_pt = expected_indent_pt
 
     def check(self, context: RuleContext):
-        if context.block.role != "body" or not context.block.text.strip():
+        if context.block.role != "body" or not context.block.text.strip() or context.sentence.index != 0:
             return []
         text = context.sentence.text
         if text[:1] in {" ", "\t", "\u3000"}:
