@@ -13,6 +13,8 @@ frontend/playwright-report/
 frontend/test-results/
 *.tsbuildinfo
 *.egg-info/
+build/
+dist/
 data/jobs/
 data/models/
 data/term-libraries/*.txt
