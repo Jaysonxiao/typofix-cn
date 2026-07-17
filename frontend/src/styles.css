@@ -79,7 +79,40 @@ input[type="radio"], input[type="checkbox"] { accent-color: #1c8c82; margin-righ
 .dialog-actions { display: flex; justify-content: end; gap: 12px; margin-top: 25px; }
 .dialog-actions button:first-child { border: 1px solid #bfcbd4; padding: 11px 15px; background: #fff; color: #25384d; }
 .dialog-actions .primary-button { margin-top: 0; }
+.page-header { display: flex; align-items: end; justify-content: space-between; gap: 32px; padding: 28px 0 30px; border-bottom: 1px solid #d9e0e5; }
+.page-header h1 { margin: 12px 0; font: 600 clamp(2.5rem, 6vw, 4.8rem)/.98 "Noto Serif SC", "Songti SC", serif; letter-spacing: -.055em; }
+.page-header p:not(.kicker) { max-width: 620px; margin: 0; color: #596878; line-height: 1.75; }
+.back-link, .text-link { color: #132238; font-weight: 700; text-decoration: none; border-bottom: 2px solid #1c8c82; padding-bottom: 5px; }
+.back-link:hover, .text-link:hover { color: #1c8c82; }
+.terms-page, .history-page { max-width: 1180px; margin: 0 auto; padding: 40px 28px 72px; }
+.terms-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; margin-top: 28px; }
+.terms-sidebar, .terms-card { padding: 22px; border: 1px solid #d9e0e5; background: #fff; }
+.terms-sidebar { display: grid; align-content: start; gap: 9px; }
+.library-tab { display: flex; justify-content: space-between; padding: 11px 12px; border: 1px solid transparent; background: transparent; color: #25384d; text-align: left; }
+.library-tab span { color: #8997a3; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.library-tab:hover, .library-tab.is-active { border-color: #acd8d1; background: #eef8f5; color: #176d66; }
+.new-library { display: grid; gap: 8px; margin-top: 20px; padding-top: 18px; border-top: 1px solid #eef1ef; }
+.new-library label { color: #596878; font-size: .82rem; }
+.new-library input, .term-add-row input { width: 100%; padding: 10px 11px; border: 1px solid #bfcbd4; border-radius: 0; }
+.new-library button, .term-add-row button { padding: 10px 12px; border: 1px solid #132238; background: #132238; color: #fff; font-weight: 700; }
+.terms-card .section-heading { margin-bottom: 18px; }
+.terms-card .section-heading h2 { margin-bottom: 0; }
+.term-add-row { display: flex; gap: 10px; padding-bottom: 20px; border-bottom: 1px solid #eef1ef; }
+.term-add-row .primary-button { margin-top: 0; white-space: nowrap; }
+.term-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.term-list li { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px 0; border-bottom: 1px solid #eef1ef; }
+.term-list li button { border: 0; background: transparent; color: #a94236; font-size: .82rem; }
+.empty-copy { color: #8997a3; line-height: 1.7; }
+.history-list { display: grid; gap: 12px; margin-top: 28px; }
+.history-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 21px 22px; border: 1px solid #d9e0e5; background: #fff; }
+.history-row h2 { margin: 8px 0 7px; font: 600 1.35rem/1.2 "Noto Serif SC", "Songti SC", serif; }
+.history-row p:not(.eyebrow) { margin: 0; color: #596878; font-size: .88rem; }
+.history-action { display: flex; align-items: center; gap: 17px; flex: 0 0 auto; }
+.status-chip { padding: 6px 9px; background: #eef1ef; color: #596878; font-size: .78rem; font-weight: 700; }
+.status-completed { background: #dff2ee; color: #176d66; }
+.status-failed, .status-completed_with_document_failures { background: #fcebe8; color: #a94236; }
 @media (max-width: 680px) { .report-page { padding: 24px 16px 48px; } .report-header { display: block; } .download-link { display: inline-block; margin-top: 22px; } .report-summary { grid-template-columns: 1fr; } .issue-row { padding: 17px 16px 15px; } }
+@media (max-width: 760px) { .terms-page, .history-page { padding: 24px 16px 48px; } .page-header { display: block; } .back-link { display: inline-block; margin-top: 22px; } .terms-layout { grid-template-columns: 1fr; } .history-row { display: block; } .history-action { justify-content: space-between; margin-top: 17px; } }
 
 @keyframes pulse { 50% { transform: scale(.55); opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

@@ -16,6 +16,14 @@ export interface JobSummary {
   error?: string | null;
 }
 
+export interface JobHistoryItem extends JobSummary {
+  mode: "full" | "rules_only";
+  input_paths: string[];
+  selected_libraries: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface JobCreated {
   job_id: string;
   status: JobStatus;

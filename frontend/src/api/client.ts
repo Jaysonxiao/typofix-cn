@@ -1,4 +1,4 @@
-import type { AnalysisReport, JobCreated, JobSummary, TermLibrary } from "../types";
+import type { AnalysisReport, JobCreated, JobHistoryItem, JobSummary, TermLibrary } from "../types";
 
 const API_ROOT = "/api/v1";
 
@@ -25,6 +25,22 @@ export function createJob(files: File[], libraries: string[], mode: "full" | "ru
 
 export function getJob(jobId: string): Promise<JobSummary> {
   return request<JobSummary>(`/jobs/${encodeURIComponent(jobId)}`);
+}
+
+export function listJobs(): Promise<JobHistoryItem[]> {
+  return request<JobHistoryItem[]>("/jobs");
+}
+
+export function createTermLibrary(name: string): Promise<TermLibrary> {
+  return request<TermLibrary>("/term-libraries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+}
+
+export function addTerm(library: string, term: string): Promise<TermLibrary> {
+  return request<TermLibrary>(`/term-libraries/${encodeURIComponent(library)}/terms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ term }) });
+}
+
+export function deleteTerm(library: string, term: string): Promise<TermLibrary> {
+  return request<TermLibrary>(`/term-libraries/${encodeURIComponent(library)}/terms`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ term }) });
 }
 
 export function getReport(jobId: string): Promise<AnalysisReport> {
