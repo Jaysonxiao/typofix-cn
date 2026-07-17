@@ -43,6 +43,11 @@ def _read_text_retry(path: Path) -> str:
     raise AssertionError("unreachable")
 
 
+def _docx_expanded_size(path: Path) -> int:
+    with zipfile.ZipFile(path) as archive:
+        return sum(info.file_size for info in archive.infolist())
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     settings.ensure_directories()
@@ -121,6 +126,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 destination.write_bytes(data)
                 if not zipfile.is_zipfile(destination):
                     raise HTTPException(status_code=422, detail={"code": "INVALID_DOCX", "message": "文件不是有效的 DOCX"})
+                if _docx_expanded_size(destination) > settings.max_expanded_bytes:
+                    raise HTTPException(status_code=422, detail={"code": "EXPANDED_SIZE_LIMIT", "message": "DOCX 解压后大小超出限制"})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
             jobs.update(manifest.model_copy(update={"status": JobStatus.FAILED, "phase": "failed", "error": detail.get("message", "文件上传失败")}))
