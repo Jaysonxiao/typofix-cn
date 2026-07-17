@@ -1,0 +1,28 @@
+import type { JobCreated, JobSummary, TermLibrary } from "../types";
+
+const API_ROOT = "/api/v1";
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_ROOT}${path}`, init);
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ detail: { message: "请求失败" } }));
+    throw new Error(payload.detail?.message ?? "请求失败");
+  }
+  return response.json() as Promise<T>;
+}
+
+export function listTermLibraries(): Promise<TermLibrary[]> {
+  return request<TermLibrary[]>("/term-libraries");
+}
+
+export function createJob(files: File[], libraries: string[], mode: "full" | "rules_only"): Promise<JobCreated> {
+  const body = new FormData();
+  files.forEach((file) => body.append("files", file, file.name));
+  body.set("term_libraries", libraries.join(","));
+  body.set("mode", mode);
+  return request<JobCreated>("/jobs", { method: "POST", body });
+}
+
+export function getJob(jobId: string): Promise<JobSummary> {
+  return request<JobSummary>(`/jobs/${encodeURIComponent(jobId)}`);
+}
