@@ -16,6 +16,7 @@ def context(text: str, role: str = "body") -> RuleContext:
             text=text,
             role=role,
             style_name="Normal",
+            first_line_indent_pt=24,
         ),
         sentence=SentenceSpan(index=0, text=text, start=0, end=len(text)),
     )

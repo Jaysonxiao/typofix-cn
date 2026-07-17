@@ -10,6 +10,8 @@ class ExtractedBlock(BaseModel):
     text: str
     role: str
     style_name: str | None = None
+    font_name: str | None = None
+    font_size_pt: float | None = None
     first_line_indent_pt: float | None = None
     left_indent_pt: float | None = None
     alignment: str | None = None

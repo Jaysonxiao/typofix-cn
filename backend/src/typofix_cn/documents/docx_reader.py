@@ -83,6 +83,10 @@ class DocxReader:
     ) -> ExtractedBlock:
         fmt = paragraph.paragraph_format
         alignment = getattr(paragraph.alignment, "value", None)
+        first_run = paragraph.runs[0] if paragraph.runs else None
+        style_font = paragraph.style.font if paragraph.style is not None else None
+        font_name = (first_run.font.name if first_run is not None else None) or (style_font.name if style_font else None)
+        font_size = (first_run.font.size if first_run is not None else None) or (style_font.size if style_font else None)
         return ExtractedBlock(
             document_path=relative_path,
             region=region,
@@ -90,6 +94,8 @@ class DocxReader:
             text=paragraph.text,
             role=classify_paragraph(paragraph, region=region),
             style_name=paragraph.style.name if paragraph.style is not None else None,
+            font_name=font_name,
+            font_size_pt=_format_value(font_size),
             first_line_indent_pt=_format_value(fmt.first_line_indent),
             left_indent_pt=_format_value(fmt.left_indent),
             alignment=str(alignment) if alignment is not None else None,
