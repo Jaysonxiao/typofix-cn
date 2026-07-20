@@ -15,11 +15,11 @@ export function listTermLibraries(): Promise<TermLibrary[]> {
   return request<TermLibrary[]>("/term-libraries");
 }
 
-export function testMacBert(text: string): Promise<MacBertRawResult> {
+export function testMacBert(text: string, threshold: number): Promise<MacBertRawResult> {
   return request<MacBertRawResult>("/macbert/test", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, threshold }),
   });
 }
 

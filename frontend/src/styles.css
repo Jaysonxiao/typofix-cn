@@ -64,7 +64,7 @@ a { color: inherit; }
 
 .model-test-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, .35fr) auto;
   gap: 14px 16px;
   margin-top: 22px;
   padding: 20px;
@@ -78,6 +78,9 @@ a { color: inherit; }
 .model-test-input { display: grid; gap: 8px; min-width: 0; color: var(--muted); font-size: .82rem; font-weight: 650; }
 .model-test-input textarea { width: 100%; min-height: 92px; padding: 12px 14px; resize: vertical; border: 1px solid var(--line-strong); border-radius: 13px; outline: none; background: var(--surface-subtle); color: var(--ink); line-height: 1.65; }
 .model-test-input textarea::placeholder { color: var(--muted-light); }
+.model-test-threshold { display: grid; grid-template-columns: auto minmax(110px, 1fr) 3ch; align-items: center; gap: 10px; align-self: end; color: var(--muted); font-size: .78rem; font-weight: 650; }
+.model-test-threshold input { width: 100%; accent-color: var(--accent); }
+.model-test-threshold output { color: var(--ink); font-variant-numeric: tabular-nums; }
 .model-test-button { align-self: end; min-width: 112px; margin: 0; white-space: nowrap; }
 .model-test-message, .model-test-result { grid-column: 1 / -1; }
 .model-test-message { margin: 0; }

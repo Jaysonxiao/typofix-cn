@@ -13,6 +13,7 @@ export function CheckPage() {
   const [job, setJob] = useState<JobSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [testText, setTestText] = useState("");
+  const [testThreshold, setTestThreshold] = useState(0.7);
   const [testResult, setTestResult] = useState<MacBertRawResult | null>(null);
   const [testLoading, setTestLoading] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
@@ -44,7 +45,7 @@ export function CheckPage() {
     setTestLoading(true);
     setTestError(null);
     try {
-      setTestResult(await testMacBert(testText));
+      setTestResult(await testMacBert(testText, testThreshold));
     } catch (reason) {
       setTestResult(null);
       setTestError(reason instanceof Error ? reason.message : "模型测试失败");
@@ -65,6 +66,18 @@ export function CheckPage() {
           <label className="model-test-input">
             <span>测试文本</span>
             <textarea value={testText} onChange={(event) => setTestText(event.target.value)} placeholder="例如：今天新情很好" />
+          </label>
+          <label className="model-test-threshold">
+            <span>置信度阈值</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={testThreshold}
+              onChange={(event) => setTestThreshold(Number(event.target.value))}
+            />
+            <output>{testThreshold.toFixed(2)}</output>
           </label>
           <button className="primary-button model-test-button" disabled={!testText.trim() || testLoading} onClick={runModelTest}>
             {testLoading ? "测试中…" : "测试模型"}
