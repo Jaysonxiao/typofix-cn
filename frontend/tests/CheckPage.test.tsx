@@ -31,6 +31,8 @@ describe("CheckPage", () => {
     const user = userEvent.setup();
     render(<CheckPage />);
     await userEvent.upload(screen.getByLabelText("上传文件"), new File(["docx"], "论文.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
+    fireEvent.change(screen.getByLabelText("检测阈值"), { target: { value: "0.4" } });
+    fireEvent.change(screen.getByLabelText("纠正阈值"), { target: { value: "0.2" } });
     await user.click(await screen.findByLabelText("default"));
     await user.click(screen.getByRole("button", { name: "开始校验" }));
     expect(await screen.findByText("正在校验")).toBeInTheDocument();
@@ -38,6 +40,8 @@ describe("CheckPage", () => {
     const request = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
     expect(request).toBeDefined();
     expect((request?.[1]?.body as FormData).get("term_libraries")).toBe("default");
+    expect((request?.[1]?.body as FormData).get("detection_threshold")).toBe("0.4");
+    expect((request?.[1]?.body as FormData).get("correction_threshold")).toBe("0.2");
   });
 
   it("tests plain text with separate MacBERT thresholds and keeps the DOCX entry", async () => {

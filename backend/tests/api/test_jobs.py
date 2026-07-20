@@ -67,3 +67,19 @@ def test_folder_upload_keeps_relative_paths(tmp_path) -> None:
         assert response.status_code == 202
         job = client.get(f"/api/v1/jobs/{response.json()['job_id']}").json()
         assert job["input_paths"] == ["chapter-1/论文.docx"]
+
+
+def test_job_persists_macbert_thresholds_from_upload_request(tmp_path) -> None:
+    path = make_docx(tmp_path)
+    with TestClient(create_app(Settings(data_dir=tmp_path / "data"))) as client:
+        with path.open("rb") as stream:
+            response = client.post(
+                "/api/v1/jobs",
+                data={"mode": "rules_only", "detection_threshold": "0.41", "correction_threshold": "0.19"},
+                files=[("files", ("论文.docx", stream, "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))],
+            )
+        assert response.status_code == 202
+        job = client.get(f"/api/v1/jobs/{response.json()['job_id']}").json()
+
+    assert job["detection_threshold"] == 0.41
+    assert job["correction_threshold"] == 0.19

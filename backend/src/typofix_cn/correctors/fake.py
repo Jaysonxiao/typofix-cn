@@ -8,7 +8,7 @@ class FakeCorrector:
         self.corrections = corrections
         self.calls = 0
 
-    def correct(self, inputs: Sequence[CorrectionInput]) -> list[CorrectionResult]:
+    def correct(self, inputs: Sequence[CorrectionInput], *, detection_threshold: float = 0.50, correction_threshold: float = 0.30) -> list[CorrectionResult]:
         self.calls += 1
         results: list[CorrectionResult] = []
         for item in inputs:

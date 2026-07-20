@@ -23,12 +23,16 @@ class AnalysisService:
         reader: DocxReader | None = None,
         rules: RuleRegistry | None = None,
         model_name: str | None = None,
+        detection_threshold: float = 0.50,
+        correction_threshold: float = 0.30,
     ) -> None:
         self.corrector = corrector
         self.term_libraries = term_libraries or {}
         self.reader = reader or DocxReader()
         self.rules = rules or build_default_rule_registry()
         self.model_name = model_name
+        self.detection_threshold = detection_threshold
+        self.correction_threshold = correction_threshold
 
     def analyze(
         self,
@@ -90,7 +94,11 @@ class AnalysisService:
                 for sentence in split_sentences(block.text)
                 if sentence.text.strip()
             ]
-            for result in self.corrector.correct(inputs):
+            for result in self.corrector.correct(
+                inputs,
+                detection_threshold=self.detection_threshold,
+                correction_threshold=self.correction_threshold,
+            ):
                 paragraph_index, sentence_index = (int(value) for value in result.key.split(":", 1))
                 block, sentence = sentence_map[result.key]
                 for finding in result.findings:

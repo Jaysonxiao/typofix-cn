@@ -17,10 +17,27 @@ class JobRepository:
         self.jobs_dir.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
 
-    def create(self, input_paths: list[str], *, mode: str, libraries: list[str]) -> JobManifest:
+    def create(
+        self,
+        input_paths: list[str],
+        *,
+        mode: str,
+        libraries: list[str],
+        detection_threshold: float = 0.50,
+        correction_threshold: float = 0.30,
+    ) -> JobManifest:
         with self._lock:
             job_id = uuid.uuid4().hex
-            manifest = JobManifest(job_id=job_id, status=JobStatus.QUEUED, mode=mode, input_paths=input_paths, selected_libraries=libraries, total_documents=len(input_paths))
+            manifest = JobManifest(
+                job_id=job_id,
+                status=JobStatus.QUEUED,
+                mode=mode,
+                input_paths=input_paths,
+                selected_libraries=libraries,
+                detection_threshold=detection_threshold,
+                correction_threshold=correction_threshold,
+                total_documents=len(input_paths),
+            )
             self._write(manifest)
             return manifest
 

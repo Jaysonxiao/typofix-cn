@@ -71,7 +71,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             library_data = {name: terms.load(name).terms for name in manifest.selected_libraries}
             corrector = FakeCorrector({}) if manifest.mode == "rules_only" else MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese", confusion_path=settings.confusions_path)
             input_paths = [jobs.job_dir(manifest.job_id) / "input" / Path(item) for item in manifest.input_paths]
-            report = AnalysisService(corrector=corrector, term_libraries=library_data, model_name=settings.model_name).analyze(input_paths, relative_paths=manifest.input_paths, selected_libraries=manifest.selected_libraries, mode=manifest.mode, job_id=manifest.job_id)
+            report = AnalysisService(
+                corrector=corrector,
+                term_libraries=library_data,
+                model_name=settings.model_name,
+                detection_threshold=manifest.detection_threshold,
+                correction_threshold=manifest.correction_threshold,
+            ).analyze(input_paths, relative_paths=manifest.input_paths, selected_libraries=manifest.selected_libraries, mode=manifest.mode, job_id=manifest.job_id)
             JsonReportWriter().write(report, jobs.job_dir(manifest.job_id) / "report.json")
             HtmlReportWriter().write(report, jobs.job_dir(manifest.job_id) / "report.html")
             status = JobStatus.COMPLETED_WITH_DOCUMENT_FAILURES if any(item.status == "failed" for item in report.documents) else JobStatus.COMPLETED
@@ -118,6 +124,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         files: list[UploadFile] = File(...),
         mode: str = Form("full"),
         term_libraries: str = Form(""),
+        detection_threshold: float = Form(0.50, ge=0.0, le=1.0),
+        correction_threshold: float = Form(0.30, ge=0.0, le=1.0),
     ):
         if mode not in {"full", "rules_only"}:
             raise HTTPException(status_code=422, detail={"code": "INVALID_MODE", "message": "校验模式无效"})
@@ -138,7 +146,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             names.append(relative_path.as_posix())
         if len(set(names)) != len(names):
             raise HTTPException(status_code=422, detail={"code": "DUPLICATE_FILE", "message": "上传列表包含重复文件"})
-        manifest = jobs.create(names, mode=mode, libraries=library_names)
+        manifest = jobs.create(
+            names,
+            mode=mode,
+            libraries=library_names,
+            detection_threshold=detection_threshold,
+            correction_threshold=correction_threshold,
+        )
         input_dir = jobs.job_dir(manifest.job_id) / "input"
         input_dir.mkdir(parents=True, exist_ok=True)
         try:

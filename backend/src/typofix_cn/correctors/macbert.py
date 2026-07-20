@@ -62,8 +62,18 @@ class MacBertCorrector:
                 raise ModelNotReady("MacBERT 模型未就绪，请先下载模型") from exc
         return self._backend
 
-    def correct(self, inputs: Sequence[CorrectionInput]) -> list[CorrectionResult]:
-        batches = self.correct_raw([item.text for item in inputs])
+    def correct(
+        self,
+        inputs: Sequence[CorrectionInput],
+        *,
+        detection_threshold: float = 0.50,
+        correction_threshold: float = 0.30,
+    ) -> list[CorrectionResult]:
+        batches = self.correct_raw(
+            [item.text for item in inputs],
+            detection_threshold=detection_threshold,
+            correction_threshold=correction_threshold,
+        )
         converted: list[CorrectionResult] = []
         for item, raw in zip(inputs, batches, strict=True):
             confusion_ranges = {

@@ -24,5 +24,11 @@ class CorrectionResult(BaseModel):
 
 
 class Corrector(Protocol):
-    def correct(self, inputs: Sequence[CorrectionInput]) -> list[CorrectionResult]:
+    def correct(
+        self,
+        inputs: Sequence[CorrectionInput],
+        *,
+        detection_threshold: float = 0.50,
+        correction_threshold: float = 0.30,
+    ) -> list[CorrectionResult]:
         raise RuntimeError("Corrector protocol method must be implemented")

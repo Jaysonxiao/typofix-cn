@@ -42,9 +42,9 @@ a { color: inherit; }
 
 .hero-panel { padding: 12px 0 38px; }
 .topline { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.top-nav { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, .72); box-shadow: 0 4px 16px rgba(29, 29, 31, .04); }
-.top-nav a { padding: 7px 12px; border-radius: 999px; color: var(--muted); font-size: .84rem; text-decoration: none; transition: color .18s ease, background .18s ease; }
-.top-nav a:hover { color: var(--ink); background: var(--surface-muted); }
+.top-nav { display: inline-flex; align-items: center; gap: 8px; }
+.top-nav a { min-height: 38px; padding: 9px 15px; border-radius: 999px; background: var(--accent); color: #fff; box-shadow: 0 7px 16px rgba(0, 113, 227, .18); font-size: .84rem; font-weight: 650; text-decoration: none; transition: transform .18s ease, background .18s ease, box-shadow .18s ease; }
+.top-nav a:hover { transform: translateY(-1px); background: var(--accent-hover); box-shadow: 0 10px 20px rgba(0, 113, 227, .24); }
 .kicker, .eyebrow, .quiet-label {
   color: var(--muted);
   font: 650 .69rem/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", sans-serif;

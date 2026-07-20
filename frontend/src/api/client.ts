@@ -23,7 +23,13 @@ export function testMacBert(text: string, detectionThreshold: number, correction
   });
 }
 
-export function createJob(files: File[], libraries: string[], mode: "full" | "rules_only"): Promise<JobCreated> {
+export function createJob(
+  files: File[],
+  libraries: string[],
+  mode: "full" | "rules_only",
+  detectionThreshold: number,
+  correctionThreshold: number,
+): Promise<JobCreated> {
   const body = new FormData();
   files.forEach((file) => {
     const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
@@ -31,6 +37,8 @@ export function createJob(files: File[], libraries: string[], mode: "full" | "ru
   });
   body.set("term_libraries", libraries.join(","));
   body.set("mode", mode);
+  body.set("detection_threshold", detectionThreshold.toString());
+  body.set("correction_threshold", correctionThreshold.toString());
   return request<JobCreated>("/jobs", { method: "POST", body });
 }
 

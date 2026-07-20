@@ -32,7 +32,7 @@ export function CheckPage() {
   async function startCheck() {
     setError(null);
     try {
-      const created = await createJob(files, selectedLibraries, mode);
+      const created = await createJob(files, selectedLibraries, mode, detectionThreshold, correctionThreshold);
       setJob({ job_id: created.job_id, status: created.status, processed_documents: 0, total_documents: files.length, phase: "queued" });
       const current = await getJob(created.job_id);
       setJob(current);
