@@ -5,15 +5,17 @@ import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 from pathlib import PurePosixPath
+from typing import Any
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from typofix_cn.application.analyze import AnalysisService
 from typofix_cn.config import Settings
 from typofix_cn.correctors.fake import FakeCorrector
-from typofix_cn.correctors.macbert import MacBertCorrector
+from typofix_cn.correctors.macbert import MacBertCorrector, ModelDependencyMissing, ModelInferenceError, ModelNotReady
 from typofix_cn.domain.jobs import JobStatus
 from typofix_cn.jobs.queue import JobQueue
 from typofix_cn.jobs.repository import JobRepository
@@ -21,6 +23,10 @@ from typofix_cn.reports.html_report import HtmlReportWriter
 from typofix_cn.reports.json_report import JsonReportWriter
 from typofix_cn.terms.repository import TextTermRepository
 from typofix_cn.api.routes.terms import build_terms_router
+
+
+class MacBertTestRequest(BaseModel):
+    text: str
 
 
 def _safe_upload_path(filename: str) -> Path:
@@ -53,6 +59,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings.ensure_directories()
     jobs = JobRepository(settings.data_dir)
     terms = TextTermRepository(settings.term_libraries_dir)
+    macbert_tester = MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese")
 
     def run_job(job_id: object) -> None:
         manifest = jobs.get(str(job_id))
@@ -87,6 +94,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/v1/health")
     def health():
         return {"status": "ok", "model_name": settings.model_name}
+
+    @app.post("/api/v1/macbert/test")
+    def test_macbert(payload: MacBertTestRequest) -> dict[str, Any]:
+        if not payload.text.strip():
+            raise HTTPException(status_code=422, detail={"code": "EMPTY_TEXT", "message": "请输入要测试的文本"})
+        try:
+            return macbert_tester.correct_raw([payload.text])[0]
+        except (ModelDependencyMissing, ModelNotReady, ModelInferenceError) as exc:
+            raise HTTPException(status_code=503, detail={"code": "MODEL_UNAVAILABLE", "message": str(exc)}) from exc
 
     @app.post("/api/v1/jobs", status_code=202)
     async def create_job(

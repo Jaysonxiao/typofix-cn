@@ -29,6 +29,13 @@ export interface JobCreated {
   status: JobStatus;
 }
 
+export interface MacBertRawResult {
+  source: string;
+  target: string;
+  errors: unknown[];
+  [key: string]: unknown;
+}
+
 export type IssueCategory = "TEXT_CORRECTION" | "PUNCTUATION_CHARACTER" | "PARAGRAPH_LAYOUT" | "STRUCTURE_NUMBERING" | "CITATION_REFERENCE";
 export type IssueSource = "model" | "rule";
 export type IssueStatus = "actionable" | "term_suppressed";

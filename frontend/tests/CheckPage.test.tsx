@@ -1,11 +1,15 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckPage } from "../src/pages/CheckPage";
 
 
 describe("CheckPage", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.restoreAllMocks();
   });
@@ -34,5 +38,29 @@ describe("CheckPage", () => {
     const request = fetchMock.mock.calls.find(([, init]) => init?.method === "POST");
     expect(request).toBeDefined();
     expect((request?.[1]?.body as FormData).get("term_libraries")).toBe("default");
+  });
+
+  it("tests plain text with MacBERT and keeps the DOCX entry", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/term-libraries")) {
+        return new Response(JSON.stringify([]), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        source: "今天新情很好",
+        target: "今天心情很好",
+        errors: [["新", "心", 2]],
+      }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    render(<CheckPage />);
+    await user.type(screen.getByLabelText("测试文本"), "今天新情很好");
+    await user.click(screen.getByRole("button", { name: "测试模型" }));
+
+    expect(await screen.findByText(/今天心情很好/)).toBeInTheDocument();
+    expect(screen.getByText("上传文件")).toBeInTheDocument();
+    expect(screen.queryByText("把论文里的小毛刺，留在交稿前。")).not.toBeInTheDocument();
   });
 });

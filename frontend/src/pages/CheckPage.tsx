@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-import { createJob, getJob, listTermLibraries } from "../api/client";
+import { createJob, getJob, listTermLibraries, testMacBert } from "../api/client";
 import { FilePicker } from "../components/FilePicker";
 import { JobProgress } from "../components/JobProgress";
-import type { JobSummary, TermLibrary } from "../types";
+import type { JobSummary, MacBertRawResult, TermLibrary } from "../types";
 
 export function CheckPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -12,6 +12,10 @@ export function CheckPage() {
   const [mode, setMode] = useState<"full" | "rules_only">("full");
   const [job, setJob] = useState<JobSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [testText, setTestText] = useState("");
+  const [testResult, setTestResult] = useState<MacBertRawResult | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
 
   useEffect(() => {
     listTermLibraries().then(setLibraries).catch((reason: Error) => setError(reason.message));
@@ -35,12 +39,39 @@ export function CheckPage() {
     }
   }
 
+  async function runModelTest() {
+    if (!testText.trim()) return;
+    setTestLoading(true);
+    setTestError(null);
+    try {
+      setTestResult(await testMacBert(testText));
+    } catch (reason) {
+      setTestResult(null);
+      setTestError(reason instanceof Error ? reason.message : "模型测试失败");
+    } finally {
+      setTestLoading(false);
+    }
+  }
+
   return (
     <main className="check-page">
       <section className="hero-panel">
         <div className="topline"><p className="kicker">TYPOfix / 中文文档校验</p><nav className="top-nav"><a href="/history">历史任务</a><a href="/terms">术语库</a></nav></div>
-        <h1>把论文里的小毛刺，留在交稿前。</h1>
-        <p className="hero-copy">上传 DOCX，先看真正值得处理的问题。术语豁免会被保留，也会和待处理项清楚分开。</p>
+        <div className="model-test-panel">
+          <div className="model-test-heading">
+            <div><p className="eyebrow">MacBERT</p><h1>效果测试</h1></div>
+            <span className="quiet-label">原始模型输出</span>
+          </div>
+          <label className="model-test-input">
+            <span>测试文本</span>
+            <textarea value={testText} onChange={(event) => setTestText(event.target.value)} placeholder="例如：今天新情很好" />
+          </label>
+          <button className="primary-button model-test-button" disabled={!testText.trim() || testLoading} onClick={runModelTest}>
+            {testLoading ? "测试中…" : "测试模型"}
+          </button>
+          {testError && <p className="error-copy model-test-message" role="alert">{testError}</p>}
+          {testResult && <pre className="model-test-result">{JSON.stringify(testResult, null, 2)}</pre>}
+        </div>
       </section>
       <section className="workspace-card">
         <div className="section-heading"><div><p className="eyebrow">01 · 选择材料</p><h2>从一份文档开始</h2></div><span className="quiet-label">仅在本机处理</span></div>

@@ -1,4 +1,4 @@
-import type { AnalysisReport, JobCreated, JobHistoryItem, JobSummary, TermLibrary } from "../types";
+import type { AnalysisReport, JobCreated, JobHistoryItem, JobSummary, MacBertRawResult, TermLibrary } from "../types";
 
 const API_ROOT = "/api/v1";
 
@@ -13,6 +13,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function listTermLibraries(): Promise<TermLibrary[]> {
   return request<TermLibrary[]>("/term-libraries");
+}
+
+export function testMacBert(text: string): Promise<MacBertRawResult> {
+  return request<MacBertRawResult>("/macbert/test", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
 }
 
 export function createJob(files: File[], libraries: string[], mode: "full" | "rules_only"): Promise<JobCreated> {

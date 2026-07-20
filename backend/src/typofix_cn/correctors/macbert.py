@@ -42,14 +42,17 @@ class MacBertCorrector:
         return self._backend
 
     def correct(self, inputs: Sequence[CorrectionInput]) -> list[CorrectionResult]:
-        if not inputs:
+        batches = self.correct_raw([item.text for item in inputs])
+        return [self._convert(item, raw) for item, raw in zip(inputs, batches, strict=True)]
+
+    def correct_raw(self, texts: Sequence[str]) -> list[dict[str, Any]]:
+        if not texts:
             return []
         backend = self._ensure_backend()
         try:
-            batches = backend.correct_batch([item.text for item in inputs])
+            return list(backend.correct_batch(list(texts)))
         except Exception as exc:
             raise ModelInferenceError("MacBERT 推理失败，请查看服务端日志") from exc
-        return [self._convert(item, raw) for item, raw in zip(inputs, batches, strict=True)]
 
     @staticmethod
     def _convert(item: CorrectionInput, raw: dict[str, Any]) -> CorrectionResult:
@@ -58,6 +61,8 @@ class MacBertCorrector:
             if len(error) != 3:
                 continue
             original, suggestion, start = error
+            if not original or not suggestion or len(original) != len(suggestion):
+                continue
             if not isinstance(start, int) or item.text[start : start + len(original)] != original:
                 continue
             findings.append(CorrectionFinding(start=start, end=start + len(original), original=original, suggestion=suggestion))
