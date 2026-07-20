@@ -13,7 +13,8 @@ export function CheckPage() {
   const [job, setJob] = useState<JobSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [testText, setTestText] = useState("");
-  const [testThreshold, setTestThreshold] = useState(0.7);
+  const [detectionThreshold, setDetectionThreshold] = useState(0.5);
+  const [correctionThreshold, setCorrectionThreshold] = useState(0.3);
   const [testResult, setTestResult] = useState<MacBertRawResult | null>(null);
   const [testLoading, setTestLoading] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export function CheckPage() {
     setTestLoading(true);
     setTestError(null);
     try {
-      setTestResult(await testMacBert(testText, testThreshold));
+      setTestResult(await testMacBert(testText, detectionThreshold, correctionThreshold));
     } catch (reason) {
       setTestResult(null);
       setTestError(reason instanceof Error ? reason.message : "模型测试失败");
@@ -68,16 +69,28 @@ export function CheckPage() {
             <textarea value={testText} onChange={(event) => setTestText(event.target.value)} placeholder="例如：今天新情很好" />
           </label>
           <label className="model-test-threshold">
-            <span>置信度阈值</span>
+            <span>检测阈值</span>
             <input
               type="range"
               min="0"
               max="1"
               step="0.05"
-              value={testThreshold}
-              onChange={(event) => setTestThreshold(Number(event.target.value))}
+              value={detectionThreshold}
+              onChange={(event) => setDetectionThreshold(Number(event.target.value))}
             />
-            <output>{testThreshold.toFixed(2)}</output>
+            <output>{detectionThreshold.toFixed(2)}</output>
+          </label>
+          <label className="model-test-threshold">
+            <span>纠正阈值</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={correctionThreshold}
+              onChange={(event) => setCorrectionThreshold(Number(event.target.value))}
+            />
+            <output>{correctionThreshold.toFixed(2)}</output>
           </label>
           <button className="primary-button model-test-button" disabled={!testText.trim() || testLoading} onClick={runModelTest}>
             {testLoading ? "测试中…" : "测试模型"}

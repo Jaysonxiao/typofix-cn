@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import re
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
 from .base import CorrectionFinding, CorrectionInput, CorrectionResult
+from .confusions import ConfusionConfigError, ConfusionMatch, TextConfusionRepository
+from .macbert_candidates import MacBertCandidateProvider
+from .macbert_decisions import CorrectionDecision, build_decisions
 
 
 _CHINESE_SPAN_PATTERN = re.compile(r"[\u3400-\u4DBF\u4E00-\u9FFF]+")
@@ -30,10 +35,22 @@ def _load_backend(model_path: Path) -> Any:
 
 
 class MacBertCorrector:
-    def __init__(self, model_path: Path, *, loader: Callable[[Path], Any] | None = None) -> None:
+    def __init__(
+        self,
+        model_path: Path,
+        *,
+        loader: Callable[[Path], Any] | None = None,
+        confusion_path: Path | None = None,
+    ) -> None:
         self.model_path = Path(model_path)
         self._loader = loader or _load_backend
         self._backend: Any | None = None
+        if confusion_path is not None:
+            self.confusion_path = Path(confusion_path)
+        elif self.model_path.parent.name == "models":
+            self.confusion_path = self.model_path.parent.parent / "confusions" / "default.txt"
+        else:
+            self.confusion_path = self.model_path.parent / "confusions" / "default.txt"
 
     def _ensure_backend(self) -> Any:
         if self._backend is None:
@@ -47,60 +64,123 @@ class MacBertCorrector:
 
     def correct(self, inputs: Sequence[CorrectionInput]) -> list[CorrectionResult]:
         batches = self.correct_raw([item.text for item in inputs])
-        return [self._convert(item, raw) for item, raw in zip(inputs, batches, strict=True)]
+        converted: list[CorrectionResult] = []
+        for item, raw in zip(inputs, batches, strict=True):
+            confusion_ranges = {
+                (int(decision["start"]), int(decision["end"]))
+                for decision in raw.get("decisions", [])
+                if decision.get("provider") == "confusion"
+            }
+            filtered = dict(raw)
+            filtered["errors"] = [error for error in raw.get("errors", []) if (error[2], error[2] + len(error[0])) not in confusion_ranges]
+            converted.append(self._convert(item, filtered))
+        return converted
 
-    def correct_raw(self, texts: Sequence[str], *, threshold: float = 0.7) -> list[dict[str, Any]]:
+    def correct_raw(
+        self,
+        texts: Sequence[str],
+        *,
+        detection_threshold: float = 0.50,
+        correction_threshold: float = 0.30,
+        threshold: float | None = None,
+    ) -> list[dict[str, Any]]:
         if not texts:
             return []
+        results: list[dict[str, Any]] = [
+            {"source": text, "target": text, "errors": [], "decisions": []} for text in texts
+        ]
+        eligible_indices = [index for index, text in enumerate(texts) if _CHINESE_SPAN_PATTERN.search(text)]
+        if not eligible_indices:
+            return results
+        backend = self._ensure_backend()
+        confusion_repository = TextConfusionRepository(self.confusion_path)
+        try:
+            confusion_matches = {index: confusion_repository.match(texts[index]) for index in eligible_indices}
+        except ConfusionConfigError:
+            raise
 
-        results: list[dict[str, Any]] = [{"source": text, "target": text, "errors": []} for text in texts]
-        spans: list[tuple[int, int, str]] = []
-        for text_index, source in enumerate(texts):
-            spans.extend(
-                (text_index, match.start(), match.group())
-                for match in _CHINESE_SPAN_PATTERN.finditer(source)
-            )
-        if not spans:
+        provider = MacBertCandidateProvider(backend)
+        if provider.available:
+            try:
+                candidate_batches = provider.predict([texts[index] for index in eligible_indices])
+            except Exception as exc:
+                raise ModelInferenceError("MacBERT 推理失败，请查看服务端日志") from exc
+            for index, candidates in zip(eligible_indices, candidate_batches, strict=True):
+                decisions = build_decisions(
+                    texts[index],
+                    confusion_matches[index],
+                    candidates,
+                    detection_threshold=detection_threshold,
+                    correction_threshold=correction_threshold,
+                )
+                self._set_result(results[index], texts[index], decisions)
             return results
 
-        backend = self._ensure_backend()
+        fallback_threshold = correction_threshold if threshold is None else threshold
+        self._fallback_batch(results, texts, backend, eligible_indices, confusion_matches, fallback_threshold)
+        return results
+
+    def _fallback_batch(
+        self,
+        results: list[dict[str, Any]],
+        texts: Sequence[str],
+        backend: Any,
+        eligible_indices: list[int],
+        confusion_matches: dict[int, list[ConfusionMatch]],
+        threshold: float,
+    ) -> None:
+        spans: list[tuple[int, int, str]] = []
+        for text_index in eligible_indices:
+            spans.extend((text_index, match.start(), match.group()) for match in _CHINESE_SPAN_PATTERN.finditer(texts[text_index]))
         try:
-            corrected_spans = list(
-                backend.correct_batch(
-                    [span_text for _, _, span_text in spans],
-                    threshold=threshold,
-                )
-            )
+            corrected_spans = list(backend.correct_batch([span for _, _, span in spans], threshold=threshold))
             if len(corrected_spans) != len(spans):
                 raise ValueError("MacBERT 返回数量与输入片段数量不一致")
         except Exception as exc:
             raise ModelInferenceError("MacBERT 推理失败，请查看服务端日志") from exc
-
-        targets = [list(text) for text in texts]
-        merged_errors: list[list[tuple[str, str, int]]] = [[] for _ in texts]
+        decisions_by_index: dict[int, list[CorrectionDecision]] = {index: list(_confusion_decisions(confusion_matches[index])) for index in eligible_indices}
         for (text_index, span_start, source_span), raw in zip(spans, corrected_spans, strict=True):
-            target_span = raw.get("target", source_span)
-            if not isinstance(target_span, str) or len(target_span) != len(source_span):
-                continue
-            targets[text_index][span_start : span_start + len(source_span)] = target_span
             for error in raw.get("errors", []):
                 if not isinstance(error, (list, tuple)) or len(error) != 3:
                     continue
                 original, suggestion, local_start = error
-                if not isinstance(original, str) or not isinstance(suggestion, str):
+                if not isinstance(original, str) or not isinstance(suggestion, str) or not isinstance(local_start, int):
                     continue
-                if not original or len(original) != len(suggestion):
+                start = span_start + local_start
+                end = start + len(original)
+                if not original or len(original) != len(suggestion) or texts[text_index][start:end] != original:
                     continue
-                if not isinstance(local_start, int) or local_start < 0:
+                if any(start < item.end and end > item.start for item in decisions_by_index[text_index] if item.accepted):
                     continue
-                if source_span[local_start : local_start + len(original)] != original:
-                    continue
-                merged_errors[text_index].append((original, suggestion, span_start + local_start))
+                decisions_by_index[text_index].append(
+                    CorrectionDecision(
+                        start=start,
+                        end=end,
+                        source=original,
+                        suggestion=suggestion,
+                        provider="model",
+                        original_score=None,
+                        suggestion_score=None,
+                        detection_score=None,
+                        accepted=True,
+                        reason="backend_fallback",
+                    )
+                )
+        for text_index in eligible_indices:
+            self._set_result(results[text_index], texts[text_index], sorted(decisions_by_index[text_index], key=lambda item: item.start))
 
-        for index, result in enumerate(results):
-            result["target"] = "".join(targets[index])
-            result["errors"] = merged_errors[index]
-        return results
+    @staticmethod
+    def _set_result(result: dict[str, Any], source: str, decisions: Sequence[CorrectionDecision]) -> None:
+        target = list(source)
+        errors: list[tuple[str, str, int]] = []
+        for decision in sorted((item for item in decisions if item.accepted), key=lambda item: item.start):
+            if not decision.suggestion or source[decision.start : decision.end] != decision.source:
+                continue
+            target[decision.start : decision.end] = decision.suggestion
+            errors.append((decision.source, decision.suggestion, decision.start))
+        result["target"] = "".join(target)
+        result["errors"] = errors
+        result["decisions"] = [decision.as_dict() for decision in decisions]
 
     @staticmethod
     def _convert(item: CorrectionInput, raw: dict[str, Any]) -> CorrectionResult:
@@ -115,3 +195,21 @@ class MacBertCorrector:
                 continue
             findings.append(CorrectionFinding(start=start, end=start + len(original), original=original, suggestion=suggestion))
         return CorrectionResult(key=item.key, source=item.text, findings=findings)
+
+
+def _confusion_decisions(matches: Sequence[ConfusionMatch]) -> list[CorrectionDecision]:
+    return [
+        CorrectionDecision(
+            start=item.start,
+            end=item.end,
+            source=item.source,
+            suggestion=item.target,
+            provider="confusion",
+            original_score=None,
+            suggestion_score=None,
+            detection_score=None,
+            accepted=True,
+            reason="confusion_exact_match",
+        )
+        for item in matches
+    ]

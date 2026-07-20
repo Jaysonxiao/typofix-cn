@@ -40,7 +40,7 @@ describe("CheckPage", () => {
     expect((request?.[1]?.body as FormData).get("term_libraries")).toBe("default");
   });
 
-  it("tests plain text with an adjustable MacBERT threshold and keeps the DOCX entry", async () => {
+  it("tests plain text with separate MacBERT thresholds and keeps the DOCX entry", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.endsWith("/term-libraries")) {
@@ -50,6 +50,7 @@ describe("CheckPage", () => {
         source: "今天新情很好",
         target: "今天心情很好",
         errors: [["新", "心", 2]],
+        decisions: [{ start: 2, end: 3, source: "新", suggestion: "心", provider: "model", accepted: true }],
       }), { status: 200 });
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -57,13 +58,15 @@ describe("CheckPage", () => {
 
     render(<CheckPage />);
     await user.type(screen.getByLabelText("测试文本"), "今天新情很好");
-    fireEvent.change(screen.getByLabelText("置信度阈值"), { target: { value: "0.35" } });
+    fireEvent.change(screen.getByLabelText("检测阈值"), { target: { value: "0.35" } });
+    fireEvent.change(screen.getByLabelText("纠正阈值"), { target: { value: "0.25" } });
     await user.click(screen.getByRole("button", { name: "测试模型" }));
 
     expect(await screen.findByText(/今天心情很好/)).toBeInTheDocument();
     expect(screen.getByText("0.35")).toBeInTheDocument();
+    expect(screen.getByText("0.25")).toBeInTheDocument();
     const modelRequest = fetchMock.mock.calls.find(([input]) => String(input).endsWith("/macbert/test"));
-    expect(JSON.parse(String(modelRequest?.[1]?.body))).toEqual({ text: "今天新情很好", threshold: 0.35 });
+    expect(JSON.parse(String(modelRequest?.[1]?.body))).toEqual({ text: "今天新情很好", detection_threshold: 0.35, correction_threshold: 0.25 });
     expect(screen.getByText("上传文件")).toBeInTheDocument();
     expect(screen.queryByText("把论文里的小毛刺，留在交稿前。")).not.toBeInTheDocument();
   });

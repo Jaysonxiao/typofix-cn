@@ -33,6 +33,19 @@ export interface MacBertRawResult {
   source: string;
   target: string;
   errors: unknown[];
+  decisions?: Array<{
+    start: number;
+    end: number;
+    source: string;
+    suggestion: string | null;
+    provider: "model" | "confusion";
+    original_score: number | null;
+    suggestion_score: number | null;
+    detection_score: number | null;
+    accepted: boolean;
+    reason: string;
+    candidates: Array<{ text: string; score: number }>;
+  }>;
   [key: string]: unknown;
 }
 

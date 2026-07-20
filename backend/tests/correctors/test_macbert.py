@@ -39,6 +39,21 @@ def test_macbert_returns_backend_output_without_conversion(tmp_path) -> None:
             "source": "今天新情很好",
             "target": "今天心情很好",
             "errors": [("新", "心", 2)],
+            "decisions": [
+                {
+                    "start": 2,
+                    "end": 3,
+                    "source": "新",
+                    "suggestion": "心",
+                    "provider": "model",
+                    "original_score": None,
+                    "suggestion_score": None,
+                    "detection_score": None,
+                    "accepted": True,
+                    "reason": "backend_fallback",
+                    "candidates": [],
+                }
+            ],
         }
     ]
 
@@ -56,6 +71,21 @@ def test_macbert_corrects_chinese_spans_in_mixed_text(tmp_path) -> None:
             "source": source,
             "target": "2023年学员平均就业薪资18K/月（高于行业均值32%）",
             "errors": [("新", "薪", 11)],
+            "decisions": [
+                {
+                    "start": 11,
+                    "end": 12,
+                    "source": "新",
+                    "suggestion": "薪",
+                    "provider": "model",
+                    "original_score": None,
+                    "suggestion_score": None,
+                    "detection_score": None,
+                    "accepted": True,
+                    "reason": "backend_fallback",
+                    "candidates": [],
+                }
+            ],
         }
     ]
 
@@ -66,7 +96,7 @@ def test_macbert_does_not_load_backend_for_non_chinese_text(tmp_path) -> None:
 
     result = corrector.correct_raw(["2023 / MacBERT 18K"])
 
-    assert result == [{"source": "2023 / MacBERT 18K", "target": "2023 / MacBERT 18K", "errors": []}]
+    assert result == [{"source": "2023 / MacBERT 18K", "target": "2023 / MacBERT 18K", "errors": [], "decisions": []}]
     loader.assert_not_called()
 
 

@@ -29,10 +29,21 @@ class Settings(BaseSettings):
     def term_libraries_dir(self) -> Path:
         return self.data_dir / "term-libraries"
 
+    @property
+    def confusions_dir(self) -> Path:
+        return self.data_dir / "confusions"
+
+    @property
+    def confusions_path(self) -> Path:
+        return self.confusions_dir / "default.txt"
+
     def ensure_directories(self) -> None:
         self.jobs_dir.mkdir(parents=True, exist_ok=True)
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.term_libraries_dir.mkdir(parents=True, exist_ok=True)
+        self.confusions_dir.mkdir(parents=True, exist_ok=True)
         default_library = self.term_libraries_dir / "default.txt"
         if not default_library.exists():
             default_library.write_text("", encoding="utf-8")
+        if not self.confusions_path.exists():
+            self.confusions_path.write_text("新资 => 薪资\n", encoding="utf-8")

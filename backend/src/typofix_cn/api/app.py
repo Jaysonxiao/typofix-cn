@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from typofix_cn.application.analyze import AnalysisService
 from typofix_cn.config import Settings
 from typofix_cn.correctors.fake import FakeCorrector
+from typofix_cn.correctors.confusions import ConfusionConfigError
 from typofix_cn.correctors.macbert import MacBertCorrector, ModelDependencyMissing, ModelInferenceError, ModelNotReady
 from typofix_cn.domain.jobs import JobStatus
 from typofix_cn.jobs.queue import JobQueue
@@ -27,7 +28,8 @@ from typofix_cn.api.routes.terms import build_terms_router
 
 class MacBertTestRequest(BaseModel):
     text: str
-    threshold: float = Field(default=0.7, ge=0.0, le=1.0)
+    detection_threshold: float = Field(default=0.50, ge=0.0, le=1.0)
+    correction_threshold: float = Field(default=0.30, ge=0.0, le=1.0)
 
 
 def _safe_upload_path(filename: str) -> Path:
@@ -60,14 +62,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings.ensure_directories()
     jobs = JobRepository(settings.data_dir)
     terms = TextTermRepository(settings.term_libraries_dir)
-    macbert_tester = MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese")
+    macbert_tester = MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese", confusion_path=settings.confusions_path)
 
     def run_job(job_id: object) -> None:
         manifest = jobs.get(str(job_id))
         jobs.update(manifest.model_copy(update={"status": JobStatus.RUNNING, "phase": "analysis"}))
         try:
             library_data = {name: terms.load(name).terms for name in manifest.selected_libraries}
-            corrector = FakeCorrector({}) if manifest.mode == "rules_only" else MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese")
+            corrector = FakeCorrector({}) if manifest.mode == "rules_only" else MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese", confusion_path=settings.confusions_path)
             input_paths = [jobs.job_dir(manifest.job_id) / "input" / Path(item) for item in manifest.input_paths]
             report = AnalysisService(corrector=corrector, term_libraries=library_data, model_name=settings.model_name).analyze(input_paths, relative_paths=manifest.input_paths, selected_libraries=manifest.selected_libraries, mode=manifest.mode, job_id=manifest.job_id)
             JsonReportWriter().write(report, jobs.job_dir(manifest.job_id) / "report.json")
@@ -101,7 +103,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not payload.text.strip():
             raise HTTPException(status_code=422, detail={"code": "EMPTY_TEXT", "message": "请输入要测试的文本"})
         try:
-            return macbert_tester.correct_raw([payload.text], threshold=payload.threshold)[0]
+            return macbert_tester.correct_raw(
+                [payload.text],
+                detection_threshold=payload.detection_threshold,
+                correction_threshold=payload.correction_threshold,
+            )[0]
+        except ConfusionConfigError as exc:
+            raise HTTPException(status_code=503, detail={"code": "CONFUSION_CONFIG_INVALID", "message": str(exc)}) from exc
         except (ModelDependencyMissing, ModelNotReady, ModelInferenceError) as exc:
             raise HTTPException(status_code=503, detail={"code": "MODEL_UNAVAILABLE", "message": str(exc)}) from exc
 
