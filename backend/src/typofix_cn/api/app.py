@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from typofix_cn.application.analyze import AnalysisService
 from typofix_cn.config import Settings
@@ -27,6 +27,7 @@ from typofix_cn.api.routes.terms import build_terms_router
 
 class MacBertTestRequest(BaseModel):
     text: str
+    threshold: float = Field(default=0.7, ge=0.0, le=1.0)
 
 
 def _safe_upload_path(filename: str) -> Path:
@@ -100,7 +101,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not payload.text.strip():
             raise HTTPException(status_code=422, detail={"code": "EMPTY_TEXT", "message": "请输入要测试的文本"})
         try:
-            return macbert_tester.correct_raw([payload.text])[0]
+            return macbert_tester.correct_raw([payload.text], threshold=payload.threshold)[0]
         except (ModelDependencyMissing, ModelNotReady, ModelInferenceError) as exc:
             raise HTTPException(status_code=503, detail={"code": "MODEL_UNAVAILABLE", "message": str(exc)}) from exc
 
