@@ -5,8 +5,20 @@ from typofix_cn.correctors.macbert import MacBertCorrector
 
 
 class StubBackend:
-    def correct_batch(self, texts):
-        return [{"source": text, "target": text.replace("新", "心"), "errors": [("新", "心", 2)]} for text in texts]
+    def __init__(self) -> None:
+        self.calls: list[tuple[list[str], float]] = []
+
+    def correct_batch(self, texts, *, threshold=0.7):
+        self.calls.append((list(texts), threshold))
+        results = []
+        for text in texts:
+            if "新资" in text:
+                results.append({"source": text, "target": text.replace("新资", "薪资"), "errors": [("新", "薪", text.index("新"))]})
+            elif "新" in text:
+                results.append({"source": text, "target": text.replace("新", "心"), "errors": [("新", "心", text.index("新"))]})
+            else:
+                results.append({"source": text, "target": text, "errors": []})
+        return results
 
 
 def test_macbert_loads_backend_once(monkeypatch, tmp_path) -> None:
@@ -29,3 +41,30 @@ def test_macbert_returns_backend_output_without_conversion(tmp_path) -> None:
             "errors": [("新", "心", 2)],
         }
     ]
+
+
+def test_macbert_corrects_chinese_spans_in_mixed_text(tmp_path) -> None:
+    backend = StubBackend()
+    corrector = MacBertCorrector(tmp_path, loader=lambda _: backend)
+    source = "2023年学员平均就业新资18K/月（高于行业均值32%）"
+
+    result = corrector.correct_raw([source], threshold=0.35)
+
+    assert backend.calls == [(["年学员平均就业新资", "月", "高于行业均值"], 0.35)]
+    assert result == [
+        {
+            "source": source,
+            "target": "2023年学员平均就业薪资18K/月（高于行业均值32%）",
+            "errors": [("新", "薪", 11)],
+        }
+    ]
+
+
+def test_macbert_does_not_load_backend_for_non_chinese_text(tmp_path) -> None:
+    loader = Mock()
+    corrector = MacBertCorrector(tmp_path, loader=loader)
+
+    result = corrector.correct_raw(["2023 / MacBERT 18K"])
+
+    assert result == [{"source": "2023 / MacBERT 18K", "target": "2023 / MacBERT 18K", "errors": []}]
+    loader.assert_not_called()

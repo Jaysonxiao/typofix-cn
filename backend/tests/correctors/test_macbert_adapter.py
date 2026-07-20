@@ -5,7 +5,7 @@ from typofix_cn.correctors.macbert import MacBertCorrector
 
 
 class StubBackend:
-    def correct_batch(self, texts):
+    def correct_batch(self, texts, *, threshold=0.7):
         return [
             {
                 "errors": [
