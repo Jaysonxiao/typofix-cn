@@ -68,3 +68,20 @@ def test_macbert_does_not_load_backend_for_non_chinese_text(tmp_path) -> None:
 
     assert result == [{"source": "2023 / MacBERT 18K", "target": "2023 / MacBERT 18K", "errors": []}]
     loader.assert_not_called()
+
+
+def test_macbert_adapter_keeps_mixed_text_finding_at_global_offset(tmp_path) -> None:
+    corrector = MacBertCorrector(tmp_path, loader=lambda _: StubBackend())
+    source = "2023年学员平均就业新资18K/月"
+
+    result = corrector.correct([CorrectionInput(key="paragraph-1", text=source)])
+
+    assert [finding.model_dump() for finding in result[0].findings] == [
+        {
+            "start": 11,
+            "end": 12,
+            "original": "新",
+            "suggestion": "薪",
+            "confidence": None,
+        }
+    ]
