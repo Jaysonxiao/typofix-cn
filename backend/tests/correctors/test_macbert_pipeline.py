@@ -13,6 +13,11 @@ class PipelineBackend:
     model = object()
 
 
+class ProviderBackend:
+    def candidate_provider(self):
+        return FakeProvider(self)
+
+
 class FakeProvider:
     available = True
 
@@ -116,3 +121,11 @@ def test_macbert_inference_error_does_not_silently_fallback(monkeypatch, tmp_pat
 
     with pytest.raises(ModelInferenceError, match="MacBERT 推理失败"):
         corrector.correct_raw(["今天新情"])
+
+
+def test_macbert_uses_backend_candidate_provider_when_available(tmp_path: Path) -> None:
+    corrector = MacBertCorrector(tmp_path / "model", loader=lambda _: ProviderBackend(), confusion_path=tmp_path / "missing.txt")
+
+    result = corrector.correct_raw(["今天新情"])[0]
+
+    assert result["target"] == "今天薪情"

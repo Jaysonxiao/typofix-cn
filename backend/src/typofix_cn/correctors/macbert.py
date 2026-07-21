@@ -26,7 +26,19 @@ class ModelInferenceError(RuntimeError):
     pass
 
 
-def _load_backend(model_path: Path) -> Any:
+def _load_backend(model_path: Path, *, backend_kind: str = "auto", model_threads: int = 2) -> Any:
+    onnx_model = Path(model_path) / "onnx" / "model.onnx"
+    if backend_kind not in {"auto", "legacy", "onnx"}:
+        raise ValueError(f"unsupported MacBERT backend: {backend_kind}")
+    if backend_kind in {"auto", "onnx"} and onnx_model.is_file():
+        try:
+            from .onnx_macbert import OnnxMacBertBackend
+
+            return OnnxMacBertBackend(model_path, threads=model_threads)
+        except ImportError as exc:
+            raise ModelDependencyMissing("未安装 ONNX Runtime 或 tokenizers") from exc
+    if backend_kind == "onnx":
+        raise ModelDependencyMissing("ONNX 模型文件不存在，请检查离线发布目录")
     try:
         from pycorrector import MacBertCorrector as Backend
     except ImportError as exc:
@@ -41,9 +53,13 @@ class MacBertCorrector:
         *,
         loader: Callable[[Path], Any] | None = None,
         confusion_path: Path | None = None,
+        backend_kind: str = "auto",
+        model_threads: int = 2,
     ) -> None:
         self.model_path = Path(model_path)
-        self._loader = loader or _load_backend
+        self._loader = loader or (
+            lambda path: _load_backend(path, backend_kind=backend_kind, model_threads=model_threads)
+        )
         self._backend: Any | None = None
         if confusion_path is not None:
             self.confusion_path = Path(confusion_path)
@@ -109,7 +125,8 @@ class MacBertCorrector:
         except ConfusionConfigError:
             raise
 
-        provider = MacBertCandidateProvider(backend)
+        provider_factory = getattr(backend, "candidate_provider", None)
+        provider = provider_factory() if callable(provider_factory) else MacBertCandidateProvider(backend)
         if provider.available:
             try:
                 candidate_batches = provider.predict([texts[index] for index in eligible_indices])

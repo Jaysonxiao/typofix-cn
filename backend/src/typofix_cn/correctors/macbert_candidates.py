@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from typing import Any, Sequence
 
 try:
@@ -10,25 +9,11 @@ except ImportError:  # pragma: no cover - exercised in the rules-only installati
     torch = None  # type: ignore[assignment]
 
 from typofix_cn.documents.chunking import TextChunk, chunk_sentence
+from .macbert_types import Candidate, MacBertCandidate
 
 
 _HAN_ONLY = re.compile(r"^[\u3400-\u4DBF\u4E00-\u9FFF]$")
 _MODEL_INPUTS = {"input_ids", "attention_mask", "token_type_ids"}
-
-
-@dataclass(frozen=True)
-class Candidate:
-    text: str
-    score: float
-
-
-@dataclass(frozen=True)
-class MacBertCandidate:
-    start: int
-    end: int
-    source: str
-    original_score: float
-    candidates: tuple[Candidate, ...]
 
 
 class MacBertCandidateProvider:
