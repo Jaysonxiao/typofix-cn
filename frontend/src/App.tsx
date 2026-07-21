@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 
 import { CheckPage } from "./pages/CheckPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { GuidePage } from "./pages/GuidePage";
 import { ReportPage } from "./pages/ReportPage";
 import { TermsPage } from "./pages/TermsPage";
 
@@ -17,6 +18,7 @@ export function App() {
         <Route path="/jobs/:jobId" element={<ReportRoute />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/history" element={<HistoryPage />} />
+        <Route path="/guide" element={<GuidePage />} />
         <Route path="*" element={<CheckPage />} />
       </Routes>
     </BrowserRouter>

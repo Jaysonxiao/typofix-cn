@@ -30,6 +30,7 @@ describe("CheckPage", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
     render(<CheckPage />);
+    expect(screen.getByRole("link", { name: "使用说明" })).toHaveAttribute("href", "/guide");
     await userEvent.upload(screen.getByLabelText("上传文件"), new File(["docx"], "论文.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
     fireEvent.change(screen.getByLabelText("检测阈值"), { target: { value: "0.4" } });
     fireEvent.change(screen.getByLabelText("纠正阈值"), { target: { value: "0.2" } });
@@ -73,5 +74,18 @@ describe("CheckPage", () => {
     expect(JSON.parse(String(modelRequest?.[1]?.body))).toEqual({ text: "今天新情很好", detection_threshold: 0.35, correction_threshold: 0.25 });
     expect(screen.getByText("上传文件")).toBeInTheDocument();
     expect(screen.queryByText("把论文里的小毛刺，留在交稿前。")).not.toBeInTheDocument();
+  });
+
+  it("explains what each threshold changes", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify([]), { status: 200 })));
+    render(<CheckPage />);
+    await user.click(screen.getByRole("button", { name: "检测阈值说明" }));
+    const detectionTip = screen.getByText(/控制模型把候选标记为疑似问题的门槛/);
+    expect(detectionTip).toBeInTheDocument();
+    expect(detectionTip.parentElement).toHaveClass("model-test-threshold");
+    await user.click(screen.getByRole("button", { name: "纠正阈值说明" }));
+    expect(screen.getByText(/控制模型建议替换的最低置信度/)).toBeInTheDocument();
+    expect(screen.queryByText(/控制模型把候选标记为疑似问题的门槛/)).not.toBeInTheDocument();
   });
 });

@@ -13,6 +13,10 @@ class TermChange(BaseModel):
     term: str
 
 
+class RematchRequest(BaseModel):
+    library: str | None = None
+
+
 def build_terms_router() -> APIRouter:
     router = APIRouter(prefix="/api/v1")
 
@@ -59,7 +63,7 @@ def build_terms_router() -> APIRouter:
             raise HTTPException(status_code=422, detail={"code": "INVALID_TERM", "message": str(exc)})
 
     @router.post("/jobs/{job_id}/rematch")
-    def rematch(job_id: str, request: Request):
+    def rematch(job_id: str, request: Request, payload: RematchRequest | None = None):
         jobs = request.app.state.jobs
         try:
             manifest = jobs.get(job_id)
@@ -68,7 +72,15 @@ def build_terms_router() -> APIRouter:
             raise HTTPException(status_code=404, detail={"code": "JOB_NOT_FOUND", "message": "任务不存在"})
         json_path = job_dir / "report.json"
         html_path = job_dir / "report.html"
-        libraries = {name: request.app.state.terms.load(name).terms for name in manifest.selected_libraries}
+        library_names = list(manifest.selected_libraries)
+        if payload and payload.library and payload.library not in library_names:
+            library_names.append(payload.library)
+        try:
+            libraries = {name: request.app.state.terms.load(name).terms for name in library_names}
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=422, detail={"code": "LIBRARY_NOT_FOUND", "message": "术语库不存在"}) from exc
+        if library_names != manifest.selected_libraries:
+            manifest = jobs.update(manifest.model_copy(update={"selected_libraries": library_names}))
         report = RematchService().rematch(json_path, html_path, libraries)
         return {"job_id": job_id, "summary": report.summary.model_dump(mode="json")}
 

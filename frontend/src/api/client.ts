@@ -68,6 +68,6 @@ export function getReport(jobId: string): Promise<AnalysisReport> {
 
 export async function addTermAndRematch(jobId: string, library: string, term: string): Promise<AnalysisReport> {
   await request(`/term-libraries/${encodeURIComponent(library)}/terms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ term }) });
-  await request(`/jobs/${encodeURIComponent(jobId)}/rematch`, { method: "POST" });
+  await request(`/jobs/${encodeURIComponent(jobId)}/rematch`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ library }) });
   return getReport(jobId);
 }

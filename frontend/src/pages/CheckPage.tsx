@@ -15,6 +15,7 @@ export function CheckPage() {
   const [testText, setTestText] = useState("");
   const [detectionThreshold, setDetectionThreshold] = useState(0.5);
   const [correctionThreshold, setCorrectionThreshold] = useState(0.3);
+  const [openThresholdTip, setOpenThresholdTip] = useState<"detection" | "correction" | null>(null);
   const [testResult, setTestResult] = useState<MacBertRawResult | null>(null);
   const [testLoading, setTestLoading] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export function CheckPage() {
   return (
     <main className="check-page">
       <section className="hero-panel">
-        <div className="topline"><p className="kicker">TYPOfix / 中文文档校验</p><nav className="top-nav"><a href="/history">历史任务</a><a href="/terms">术语库</a></nav></div>
+        <div className="topline"><p className="kicker">TYPOfix / 中文文档校验</p><nav className="top-nav"><a href="/history">历史任务</a><a href="/terms">术语库</a><a href="/guide">使用说明</a></nav></div>
         <div className="model-test-panel">
           <div className="model-test-heading">
             <div><p className="eyebrow">MacBERT</p><h1>效果测试</h1></div>
@@ -68,9 +69,11 @@ export function CheckPage() {
             <span>测试文本</span>
             <textarea value={testText} onChange={(event) => setTestText(event.target.value)} placeholder="例如：今天新情很好" />
           </label>
-          <label className="model-test-threshold">
-            <span>检测阈值</span>
+          <div className="threshold-stack">
+          <div className="model-test-threshold">
+            <span className="threshold-label"><label htmlFor="detection-threshold">检测阈值</label><button type="button" className="threshold-help-button" aria-label="检测阈值说明" aria-expanded={openThresholdTip === "detection"} onClick={() => setOpenThresholdTip((current) => current === "detection" ? null : "detection")}>?</button></span>
             <input
+              id="detection-threshold"
               type="range"
               min="0"
               max="1"
@@ -79,10 +82,12 @@ export function CheckPage() {
               onChange={(event) => setDetectionThreshold(Number(event.target.value))}
             />
             <output>{detectionThreshold.toFixed(2)}</output>
-          </label>
-          <label className="model-test-threshold">
-            <span>纠正阈值</span>
+            {openThresholdTip === "detection" && <span className="threshold-tip" role="tooltip">控制模型把候选标记为疑似问题的门槛；调低会提高召回率，也会带来更多候选。</span>}
+          </div>
+          <div className="model-test-threshold">
+            <span className="threshold-label"><label htmlFor="correction-threshold">纠正阈值</label><button type="button" className="threshold-help-button" aria-label="纠正阈值说明" aria-expanded={openThresholdTip === "correction"} onClick={() => setOpenThresholdTip((current) => current === "correction" ? null : "correction")}>?</button></span>
             <input
+              id="correction-threshold"
               type="range"
               min="0"
               max="1"
@@ -91,7 +96,9 @@ export function CheckPage() {
               onChange={(event) => setCorrectionThreshold(Number(event.target.value))}
             />
             <output>{correctionThreshold.toFixed(2)}</output>
-          </label>
+            {openThresholdTip === "correction" && <span className="threshold-tip" role="tooltip">控制模型建议替换的最低置信度；调高会更保守，调低会尝试修正更多问题。</span>}
+          </div>
+          </div>
           <button className="primary-button model-test-button" disabled={!testText.trim() || testLoading} onClick={runModelTest}>
             {testLoading ? "测试中…" : "测试模型"}
           </button>
