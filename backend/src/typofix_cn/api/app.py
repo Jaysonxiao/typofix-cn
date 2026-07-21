@@ -62,14 +62,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings.ensure_directories()
     jobs = JobRepository(settings.data_dir)
     terms = TextTermRepository(settings.term_libraries_dir)
-    macbert_tester = MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese", confusion_path=settings.confusions_path)
+    macbert_corrector = MacBertCorrector(
+        settings.models_dir / "macbert4csc-base-chinese",
+        confusion_path=settings.confusions_path,
+        backend_kind=settings.model_backend,
+        model_threads=settings.model_threads,
+    )
 
     def run_job(job_id: object) -> None:
         manifest = jobs.get(str(job_id))
         jobs.update(manifest.model_copy(update={"status": JobStatus.RUNNING, "phase": "analysis"}))
         try:
             library_data = {name: terms.load(name).terms for name in manifest.selected_libraries}
-            corrector = FakeCorrector({}) if manifest.mode == "rules_only" else MacBertCorrector(settings.models_dir / "macbert4csc-base-chinese", confusion_path=settings.confusions_path)
+            corrector = FakeCorrector({}) if manifest.mode == "rules_only" else macbert_corrector
             input_paths = [jobs.job_dir(manifest.job_id) / "input" / Path(item) for item in manifest.input_paths]
             report = AnalysisService(
                 corrector=corrector,
@@ -109,7 +114,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not payload.text.strip():
             raise HTTPException(status_code=422, detail={"code": "EMPTY_TEXT", "message": "请输入要测试的文本"})
         try:
-            return macbert_tester.correct_raw(
+            return macbert_corrector.correct_raw(
                 [payload.text],
                 detection_threshold=payload.detection_threshold,
                 correction_threshold=payload.correction_threshold,

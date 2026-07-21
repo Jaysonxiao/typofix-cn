@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
     model_name: str = "shibing624/macbert4csc-base-chinese"
+    model_backend: str = "auto"
+    model_threads: int = Field(default=2, ge=1, le=8)
     max_file_bytes: int = Field(default=50 * 1024 * 1024, gt=0)
     max_batch_files: int = Field(default=100, gt=0)
     max_expanded_bytes: int = Field(default=200 * 1024 * 1024, gt=0)
