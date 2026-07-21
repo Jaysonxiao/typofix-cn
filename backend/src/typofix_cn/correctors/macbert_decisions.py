@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Iterable, Optional
 
 from .confusions import ConfusionMatch
 from .macbert_candidates import Candidate, MacBertCandidate
@@ -12,11 +12,11 @@ class CorrectionDecision:
     start: int
     end: int
     source: str
-    suggestion: str | None
+    suggestion: Optional[str]
     provider: str
-    original_score: float | None
-    suggestion_score: float | None
-    detection_score: float | None
+    original_score: Optional[float]
+    suggestion_score: Optional[float]
+    detection_score: Optional[float]
     accepted: bool
     reason: str
     candidates: tuple[Candidate, ...] = ()

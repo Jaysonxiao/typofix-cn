@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -11,7 +11,7 @@ class DocumentResult(BaseModel):
     document_path: str
     status: Literal["completed", "failed"]
     issue_ids: list[str] = Field(default_factory=list)
-    failure: str | None = None
+    failure: Optional[str] = None
 
 
 class ReportSummary(BaseModel):
@@ -26,7 +26,7 @@ class AnalysisReport(BaseModel):
     schema_version: Literal[1] = 1
     job_id: str
     mode: Literal["full", "rules_only"]
-    model_name: str | None = None
+    model_name: Optional[str] = None
     documents: list[DocumentResult]
     issues: list[Issue]
     summary: ReportSummary

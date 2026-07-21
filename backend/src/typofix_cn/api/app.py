@@ -5,7 +5,7 @@ import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 from pathlib import PurePosixPath
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
@@ -57,7 +57,7 @@ def _docx_expanded_size(path: Path) -> int:
         return sum(info.file_size for info in archive.infolist())
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Optional[Settings] = None) -> FastAPI:
     settings = settings or Settings()
     settings.ensure_directories()
     jobs = JobRepository(settings.data_dir)
@@ -161,7 +161,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         input_dir = jobs.job_dir(manifest.job_id) / "input"
         input_dir.mkdir(parents=True, exist_ok=True)
         try:
-            for upload, filename in zip(files, names, strict=True):
+            if len(files) != len(names):
+                raise RuntimeError("upload names and files have different lengths")
+            for upload, filename in zip(files, names):
                 destination = input_dir / Path(filename)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 data = await upload.read(settings.max_file_bytes + 1)

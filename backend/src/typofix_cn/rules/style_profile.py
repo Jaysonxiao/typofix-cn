@@ -1,3 +1,4 @@
+from typing import Optional
 from collections import Counter
 from dataclasses import dataclass
 
@@ -6,7 +7,7 @@ from typofix_cn.documents.models import ExtractedBlock
 
 @dataclass(frozen=True)
 class StyleProfile:
-    dominant_signature: tuple[object, ...] | None
+    dominant_signature: Optional[tuple[object, ...]]
     outlier_indexes: set[int]
 
 

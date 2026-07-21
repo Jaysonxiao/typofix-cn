@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from .base import CorrectionFinding, CorrectionInput, CorrectionResult
 from .confusions import ConfusionConfigError, ConfusionMatch, TextConfusionRepository
@@ -51,8 +51,8 @@ class MacBertCorrector:
         self,
         model_path: Path,
         *,
-        loader: Callable[[Path], Any] | None = None,
-        confusion_path: Path | None = None,
+        loader: Optional[Callable[[Path], Any]] = None,
+        confusion_path: Optional[Path] = None,
         backend_kind: str = "auto",
         model_threads: int = 2,
     ) -> None:
@@ -60,7 +60,7 @@ class MacBertCorrector:
         self._loader = loader or (
             lambda path: _load_backend(path, backend_kind=backend_kind, model_threads=model_threads)
         )
-        self._backend: Any | None = None
+        self._backend: Optional[Any] = None
         if confusion_path is not None:
             self.confusion_path = Path(confusion_path)
         elif self.model_path.parent.name == "models":
@@ -91,7 +91,9 @@ class MacBertCorrector:
             correction_threshold=correction_threshold,
         )
         converted: list[CorrectionResult] = []
-        for item, raw in zip(inputs, batches, strict=True):
+        if len(inputs) != len(batches):
+            raise ModelInferenceError("MacBERT 返回数量与输入数量不一致")
+        for item, raw in zip(inputs, batches):
             confusion_ranges = {
                 (int(decision["start"]), int(decision["end"]))
                 for decision in raw.get("decisions", [])
@@ -108,7 +110,7 @@ class MacBertCorrector:
         *,
         detection_threshold: float = 0.50,
         correction_threshold: float = 0.30,
-        threshold: float | None = None,
+        threshold: Optional[float] = None,
     ) -> list[dict[str, Any]]:
         if not texts:
             return []
@@ -132,7 +134,9 @@ class MacBertCorrector:
                 candidate_batches = provider.predict([texts[index] for index in eligible_indices])
             except Exception as exc:
                 raise ModelInferenceError("MacBERT 推理失败，请查看服务端日志") from exc
-            for index, candidates in zip(eligible_indices, candidate_batches, strict=True):
+            if len(eligible_indices) != len(candidate_batches):
+                raise ModelInferenceError("MacBERT 候选数量与输入数量不一致")
+            for index, candidates in zip(eligible_indices, candidate_batches):
                 decisions = build_decisions(
                     texts[index],
                     confusion_matches[index],
@@ -166,7 +170,7 @@ class MacBertCorrector:
         except Exception as exc:
             raise ModelInferenceError("MacBERT 推理失败，请查看服务端日志") from exc
         decisions_by_index: dict[int, list[CorrectionDecision]] = {index: list(_confusion_decisions(confusion_matches[index])) for index in eligible_indices}
-        for (text_index, span_start, source_span), raw in zip(spans, corrected_spans, strict=True):
+        for (text_index, span_start, source_span), raw in zip(spans, corrected_spans):
             for error in raw.get("errors", []):
                 if not isinstance(error, (list, tuple)) or len(error) != 3:
                     continue

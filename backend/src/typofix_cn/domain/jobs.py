@@ -1,3 +1,4 @@
+from typing import Optional
 from datetime import datetime, timezone
 from enum import StrEnum
 
@@ -27,4 +28,4 @@ class JobManifest(BaseModel):
     total_documents: int = 0
     processed_documents: int = 0
     phase: str = "queued"
-    error: str | None = None
+    error: Optional[str] = None

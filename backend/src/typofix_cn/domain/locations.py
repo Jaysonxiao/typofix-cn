@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -15,4 +16,4 @@ class TextLocation(BaseModel):
     sentence_index: int = Field(ge=0)
     start_offset: int = Field(ge=0)
     end_offset: int = Field(ge=0)
-    table: TableLocation | None = None
+    table: Optional[TableLocation] = None

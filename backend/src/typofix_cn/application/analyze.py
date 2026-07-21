@@ -1,3 +1,4 @@
+from typing import Optional
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
@@ -19,10 +20,10 @@ class AnalysisService:
         self,
         *,
         corrector: Corrector,
-        term_libraries: dict[str, list[str]] | None = None,
-        reader: DocxReader | None = None,
-        rules: RuleRegistry | None = None,
-        model_name: str | None = None,
+        term_libraries: Optional[dict[str, list[str]]] = None,
+        reader: Optional[DocxReader] = None,
+        rules: Optional[RuleRegistry] = None,
+        model_name: Optional[str] = None,
         detection_threshold: float = 0.50,
         correction_threshold: float = 0.30,
     ) -> None:
@@ -38,11 +39,11 @@ class AnalysisService:
         self,
         paths: Sequence[Path],
         *,
-        relative_paths: Sequence[str] | None = None,
+        relative_paths: Optional[Sequence[str]] = None,
         selected_libraries: Sequence[str] = (),
         mode: str = "full",
         job_id: str = "local",
-        progress: Callable[[int, int, str], None] | None = None,
+        progress: Optional[Callable[[int, int, str], None]] = None,
     ) -> AnalysisReport:
         all_issues: list[Issue] = []
         documents: list[DocumentResult] = []
@@ -50,7 +51,7 @@ class AnalysisService:
         display_paths = list(relative_paths) if relative_paths is not None else [path.name for path in paths]
         if len(display_paths) != len(paths):
             raise ValueError("relative_paths must match paths")
-        for index, (path, display_path) in enumerate(zip(paths, display_paths, strict=True), start=1):
+        for index, (path, display_path) in enumerate(zip(paths, display_paths), start=1):
             try:
                 blocks = self.reader.read(path, relative_path=display_path)
                 issues = self._analyze_blocks(blocks, mode=mode)

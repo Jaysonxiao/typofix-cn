@@ -1,3 +1,4 @@
+from typing import Optional
 from typofix_cn.domain.catalog import ERROR_TYPES
 from typofix_cn.domain.enums import IssueSource
 from typofix_cn.domain.issues import Issue
@@ -6,7 +7,7 @@ from typofix_cn.domain.locations import TextLocation
 from .base import RuleContext
 
 
-def make_issue(context: RuleContext, *, type_code: str, start: int, end: int, message: str, original: str | None = None) -> Issue:
+def make_issue(context: RuleContext, *, type_code: str, start: int, end: int, message: str, original: Optional[str] = None) -> Issue:
     definition = ERROR_TYPES[type_code]
     value = context.sentence.text[start:end] if original is None else original
     return Issue.create(

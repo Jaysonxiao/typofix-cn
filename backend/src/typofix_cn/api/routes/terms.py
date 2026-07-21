@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -14,7 +15,7 @@ class TermChange(BaseModel):
 
 
 class RematchRequest(BaseModel):
-    library: str | None = None
+    library: Optional[str] = None
 
 
 def build_terms_router() -> APIRouter:
@@ -63,7 +64,7 @@ def build_terms_router() -> APIRouter:
             raise HTTPException(status_code=422, detail={"code": "INVALID_TERM", "message": str(exc)})
 
     @router.post("/jobs/{job_id}/rematch")
-    def rematch(job_id: str, request: Request, payload: RematchRequest | None = None):
+    def rematch(job_id: str, request: Request, payload: Optional[RematchRequest] = None):
         jobs = request.app.state.jobs
         try:
             manifest = jobs.get(job_id)

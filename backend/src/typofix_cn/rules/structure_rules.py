@@ -1,3 +1,4 @@
+from typing import Optional
 import re
 from collections import Counter
 
@@ -10,7 +11,7 @@ from .helpers import make_issue
 _ENDING_PUNCTUATION = set("。！？!?；;：:")
 
 
-def _level(block: ExtractedBlock) -> int | None:
+def _level(block: ExtractedBlock) -> Optional[int]:
     match = re.search(r"(?:Heading|标题)\s*(\d+)", block.style_name or "", flags=re.IGNORECASE)
     return int(match.group(1)) if match else None
 
@@ -20,7 +21,7 @@ class StructureRuleSet:
         issues = []
         headings = [block for block in blocks if block.role == "heading"]
         levels = [_level(block) for block in headings]
-        previous: int | None = None
+        previous: Optional[int] = None
         for block, level in zip(headings, levels):
             if block.text.rstrip().endswith(tuple(_ENDING_PUNCTUATION)):
                 context = first_context(block)

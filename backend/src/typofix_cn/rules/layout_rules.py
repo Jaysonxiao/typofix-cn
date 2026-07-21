@@ -1,3 +1,4 @@
+from typing import Optional
 from typofix_cn.domain.catalog import ERROR_TYPES
 
 from .base import RuleContext
@@ -7,7 +8,7 @@ from .helpers import make_issue
 class FirstLineIndentRule:
     code = "FIRST_LINE_INDENT"
 
-    def __init__(self, expected_indent_pt: float | None = None) -> None:
+    def __init__(self, expected_indent_pt: Optional[float] = None) -> None:
         self.expected_indent_pt = expected_indent_pt
 
     def check(self, context: RuleContext):

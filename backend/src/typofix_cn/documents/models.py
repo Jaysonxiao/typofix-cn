@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 from typofix_cn.domain.locations import TableLocation
@@ -9,13 +10,13 @@ class ExtractedBlock(BaseModel):
     paragraph_index: int
     text: str
     role: str
-    style_name: str | None = None
-    font_name: str | None = None
-    font_size_pt: float | None = None
-    first_line_indent_pt: float | None = None
-    left_indent_pt: float | None = None
-    alignment: str | None = None
-    line_spacing: float | None = None
-    space_before_pt: float | None = None
-    space_after_pt: float | None = None
-    table: TableLocation | None = None
+    style_name: Optional[str] = None
+    font_name: Optional[str] = None
+    font_size_pt: Optional[float] = None
+    first_line_indent_pt: Optional[float] = None
+    left_indent_pt: Optional[float] = None
+    alignment: Optional[str] = None
+    line_spacing: Optional[float] = None
+    space_before_pt: Optional[float] = None
+    space_after_pt: Optional[float] = None
+    table: Optional[TableLocation] = None

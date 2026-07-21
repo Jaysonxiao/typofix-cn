@@ -1,3 +1,4 @@
+from typing import Optional
 from pathlib import Path
 
 import typer
@@ -18,7 +19,7 @@ app.add_typer(terms_app, name="terms")
 app.add_typer(model_app, name="model")
 
 
-def _settings(data_dir: Path | None) -> Settings:
+def _settings(data_dir: Optional[Path]) -> Settings:
     settings = Settings(data_dir=data_dir) if data_dir is not None else Settings()
     settings.ensure_directories()
     return settings
@@ -41,7 +42,7 @@ def check(
     paths: list[Path] = typer.Argument(..., exists=True),
     term_lib: list[str] = typer.Option([], "--term-lib"),
     rules_only: bool = typer.Option(False, "--rules-only"),
-    data_dir: Path | None = typer.Option(None, "--data-dir"),
+    data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
     verbose: bool = typer.Option(False, "--verbose"),
 ) -> None:
     settings = _settings(data_dir)
@@ -66,7 +67,7 @@ def check(
 
 
 @app.command()
-def serve(data_dir: Path | None = typer.Option(None, "--data-dir"), host: str = "127.0.0.1", port: int = 8000) -> None:
+def serve(data_dir: Optional[Path] = typer.Option(None, "--data-dir"), host: str = "127.0.0.1", port: int = 8000) -> None:
     from uvicorn import run
     from typofix_cn.api.app import create_app
 
@@ -74,14 +75,14 @@ def serve(data_dir: Path | None = typer.Option(None, "--data-dir"), host: str = 
 
 
 @terms_app.command("list")
-def terms_list(data_dir: Path | None = typer.Option(None, "--data-dir")) -> None:
+def terms_list(data_dir: Optional[Path] = typer.Option(None, "--data-dir")) -> None:
     settings = _settings(data_dir)
     for library in TextTermRepository(settings.term_libraries_dir).list():
         typer.echo(f"{library.name}\t{len(library.terms)}")
 
 
 @terms_app.command("add")
-def terms_add(name: str, term: str, data_dir: Path | None = typer.Option(None, "--data-dir")) -> None:
+def terms_add(name: str, term: str, data_dir: Optional[Path] = typer.Option(None, "--data-dir")) -> None:
     settings = _settings(data_dir)
     repository = TextTermRepository(settings.term_libraries_dir)
     if not (settings.term_libraries_dir / f"{name}.txt").exists():
@@ -91,7 +92,7 @@ def terms_add(name: str, term: str, data_dir: Path | None = typer.Option(None, "
 
 
 @model_app.command("download")
-def model_download(data_dir: Path | None = typer.Option(None, "--data-dir")) -> None:
+def model_download(data_dir: Optional[Path] = typer.Option(None, "--data-dir")) -> None:
     settings = _settings(data_dir)
     try:
         from huggingface_hub import snapshot_download

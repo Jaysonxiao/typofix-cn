@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Sequence
+from typing import Any, Sequence, Optional
 
 try:
     import torch
@@ -88,8 +88,8 @@ class MacBertCandidateProvider:
         input_ids: torch.Tensor,
         logits: torch.Tensor,
         offsets: torch.Tensor,
-        special_tokens_mask: torch.Tensor | None,
-        attention_mask: torch.Tensor | None,
+        special_tokens_mask: Optional[torch.Tensor],
+        attention_mask: Optional[torch.Tensor],
     ) -> list[MacBertCandidate]:
         decoded: list[MacBertCandidate] = []
         probabilities = torch.softmax(logits, dim=-1)
@@ -111,7 +111,9 @@ class MacBertCandidateProvider:
             original_score = float(row[original_id].item())
             values, ids = torch.topk(row, k=min(self.top_k + 1, row.shape[-1]))
             candidates: list[Candidate] = []
-            for value, candidate_id in zip(values.tolist(), ids.tolist(), strict=True):
+            if len(values) != len(ids):
+                raise ValueError("MacBERT candidate score and id counts differ")
+            for value, candidate_id in zip(values.tolist(), ids.tolist()):
                 candidate_text = self._decode_token(int(candidate_id))
                 if candidate_text == source or not _HAN_ONLY.fullmatch(candidate_text):
                     continue

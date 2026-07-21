@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Protocol, Optional
 
 from pydantic import BaseModel
 
@@ -14,7 +14,7 @@ class CorrectionFinding(BaseModel):
     end: int
     original: str
     suggestion: str
-    confidence: float | None = None
+    confidence: Optional[float] = None
 
 
 class CorrectionResult(BaseModel):

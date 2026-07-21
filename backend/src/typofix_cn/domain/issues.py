@@ -1,3 +1,4 @@
+from typing import Optional
 import hashlib
 import json
 
@@ -23,11 +24,11 @@ class Issue(BaseModel):
     status: IssueStatus = IssueStatus.ACTIONABLE
     location: TextLocation
     original: str
-    suggestion: str | None = None
+    suggestion: Optional[str] = None
     message: str
     context: str
-    confidence: float | None = Field(default=None, ge=0, le=1)
-    rule_code: str | None = None
+    confidence: Optional[float] = Field(default=None, ge=0, le=1)
+    rule_code: Optional[str] = None
     term_hits: list[TermHit] = Field(default_factory=list)
 
     @classmethod

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional, Union
 
 from docx import Document
 from docx.document import Document as DocumentObject
@@ -15,7 +15,7 @@ from .models import ExtractedBlock
 from .roles import classify_paragraph
 
 
-def _iter_block_items(parent: DocumentObject | _Cell) -> Iterator[Paragraph | Table]:
+def _iter_block_items(parent: Union[DocumentObject, _Cell]) -> Iterator[Union[Paragraph, Table]]:
     parent_element = parent.element.body if isinstance(parent, DocumentObject) else parent._tc
     parent_part = parent.part
     for child in parent_element.iterchildren():
@@ -25,7 +25,7 @@ def _iter_block_items(parent: DocumentObject | _Cell) -> Iterator[Paragraph | Ta
             yield Table(child, parent_part)
 
 
-def _format_value(value: object) -> float | None:
+def _format_value(value: object) -> Optional[float]:
     if value is None:
         return None
     if hasattr(value, "pt"):
@@ -79,7 +79,7 @@ class DocxReader:
         relative_path: str,
         paragraph_index: int,
         region: str,
-        table: TableLocation | None = None,
+        table: Optional[TableLocation] = None,
     ) -> ExtractedBlock:
         fmt = paragraph.paragraph_format
         alignment = getattr(paragraph.alignment, "value", None)
