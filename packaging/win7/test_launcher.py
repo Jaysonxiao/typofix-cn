@@ -16,7 +16,7 @@ def test_runtime_paths_are_relative_to_frozen_executable(tmp_path: Path) -> None
     assert paths.root == executable.parent
     assert paths.data_dir == executable.parent / "data"
     assert paths.frontend_dir == executable.parent / "frontend" / "dist"
-    assert paths.model_dir == executable.parent / "data" / "models" / "macbert4csc-base-chinese"
+    assert paths.model_dir == executable.parent / "data" / "models"
     assert paths.logs_dir == executable.parent / "logs"
 
 
@@ -32,7 +32,7 @@ def test_runtime_paths_find_pyinstaller_internal_resources(tmp_path: Path) -> No
     paths = launcher.runtime_paths(executable)
 
     assert paths.frontend_dir == internal_frontend
-    assert paths.model_dir == internal_model.parent
+    assert paths.model_dir == internal_model.parent.parent
 
 
 def test_launcher_source_has_no_model_download_entrypoint() -> None:

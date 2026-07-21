@@ -1,0 +1,7 @@
+[
+  {"name": "basic_chinese_typo", "text": "今天新情很好"},
+  {"name": "mixed_ascii_and_chinese", "text": "2023新情18K"},
+  {"name": "confusion_dictionary", "text": "新资"},
+  {"name": "long_chunk_overlap", "text": "今天新情很好。"},
+  {"name": "rules_only_text", "text": "hello 2023"}
+]

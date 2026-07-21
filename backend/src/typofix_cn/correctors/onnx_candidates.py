@@ -88,8 +88,11 @@ class OnnxMacBertCandidateProvider:
         raise ValueError("MacBERT ONNX logits must have shape [batch, sequence, vocabulary]")
 
     def _decode_window(self, chunk: TextChunk, encoding: Any, logits: np.ndarray) -> list[MacBertCandidate]:
-        if logits.shape[0] != len(encoding.ids):
+        if logits.shape[0] < len(encoding.ids):
             raise ValueError("MacBERT ONNX sequence length does not match tokenizer output")
+        # Batched ONNX inference pads every row to the longest sequence. The
+        # tokenizer encoding still has the unpadded length for this window.
+        logits = logits[: len(encoding.ids)]
         probabilities = self._softmax(logits)
         decoded: list[MacBertCandidate] = []
         for token_index, pair in enumerate(encoding.offsets):

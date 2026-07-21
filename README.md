@@ -225,4 +225,18 @@ packaging\win7\build.ps1
 
 最终发布目录是 onedir 形式，模型位于 exe 同级 `data/models/.../onnx`，不会把 PyTorch、Transformers 或重复的 PyTorch 权重放入发布包。完整验收步骤见 `packaging/win7/README-Windows7.txt`。
 
+发布前可在构建机执行模型一致性检查（需要同时保留旧模型权重和 ONNX 文件）：
+
+```powershell
+$env:TYPOFIX_MODEL_ROOT = "$pwd\data\models\macbert4csc-base-chinese"
+$env:TYPOFIX_CONFUSION_PATH = "$pwd\data\confusions\default.txt"
+python packaging\win7\verify_model_parity.py
+```
+
+构建完成后执行本地冻结程序冒烟测试；加 `-Offline` 会额外检查日志中没有模型下载或外部网络访问：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File packaging\win7\test_release.ps1 -Offline
+```
+
 CPU 依赖不带 CUDA；Windows 和 macOS 可直接本地运行。麒麟 ARM 的 PyTorch wheel、模型加载和内存基线需要在目标设备上单独验证后再制作发行包。

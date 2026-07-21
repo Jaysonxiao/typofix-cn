@@ -30,7 +30,9 @@ def runtime_paths(executable: Optional[Path] = None) -> RuntimePaths:
         root=root,
         data_dir=root / "data",
         frontend_dir=resource_root / "frontend" / "dist",
-        model_dir=resource_root / "data" / "models" / "macbert4csc-base-chinese",
+        # Settings appends the model name to ``models_dir``. Keep this as the
+        # parent directory so frozen and source launches use the same layout.
+        model_dir=resource_root / "data" / "models",
         logs_dir=root / "logs",
     )
 
