@@ -214,4 +214,15 @@ $env:TYPOFIX_RUN_MODEL_TESTS = "1"
 uv run pytest backend/tests/correctors/test_macbert_smoke.py -m model -v
 ```
 
+## Windows 7 离线发布
+
+完整纠错发布包使用 `packaging/win7` 下的独立 Python 3.8 x64 构建环境和 FP32 ONNX 模型。构建机需要联网下载构建依赖；目标 Windows 7 SP1 电脑只需解压 ZIP 并运行 `TypofixCN.exe`，不需要 Python、Node.js 或网络。
+
+```powershell
+py -3.8 -m venv packaging\win7\.venv-win7
+packaging\win7\build.ps1
+```
+
+最终发布目录是 onedir 形式，模型位于 exe 同级 `data/models/.../onnx`，不会把 PyTorch、Transformers 或重复的 PyTorch 权重放入发布包。完整验收步骤见 `packaging/win7/README-Windows7.txt`。
+
 CPU 依赖不带 CUDA；Windows 和 macOS 可直接本地运行。麒麟 ARM 的 PyTorch wheel、模型加载和内存基线需要在目标设备上单独验证后再制作发行包。
