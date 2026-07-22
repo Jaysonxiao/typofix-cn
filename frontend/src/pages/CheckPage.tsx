@@ -1,0 +1,122 @@
+import { useEffect, useState } from "react";
+
+import { createJob, getJob, listTermLibraries, testMacBert } from "../api/client";
+import { FilePicker } from "../components/FilePicker";
+import { JobProgress } from "../components/JobProgress";
+import type { JobSummary, MacBertRawResult, TermLibrary } from "../types";
+
+export function CheckPage() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [libraries, setLibraries] = useState<TermLibrary[]>([]);
+  const [selectedLibraries, setSelectedLibraries] = useState<string[]>([]);
+  const [mode, setMode] = useState<"full" | "rules_only">("full");
+  const [job, setJob] = useState<JobSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [testText, setTestText] = useState("");
+  const [detectionThreshold, setDetectionThreshold] = useState(0.5);
+  const [correctionThreshold, setCorrectionThreshold] = useState(0.3);
+  const [openThresholdTip, setOpenThresholdTip] = useState<"detection" | "correction" | null>(null);
+  const [testResult, setTestResult] = useState<MacBertRawResult | null>(null);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  useEffect(() => {
+    listTermLibraries().then(setLibraries).catch((reason: Error) => setError(reason.message));
+  }, []);
+
+  useEffect(() => {
+    if (!job || job.status === "completed" || job.status === "completed_with_document_failures" || job.status === "failed" || job.status === "interrupted") return;
+    const timer = window.setTimeout(() => getJob(job.job_id).then(setJob).catch((reason: Error) => setError(reason.message)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [job]);
+
+  async function startCheck() {
+    setError(null);
+    try {
+      const created = await createJob(files, selectedLibraries, mode, detectionThreshold, correctionThreshold);
+      setJob({ job_id: created.job_id, status: created.status, processed_documents: 0, total_documents: files.length, phase: "queued" });
+      const current = await getJob(created.job_id);
+      setJob(current);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "任务创建失败");
+    }
+  }
+
+  async function runModelTest() {
+    if (!testText.trim()) return;
+    setTestLoading(true);
+    setTestError(null);
+    try {
+      setTestResult(await testMacBert(testText, detectionThreshold, correctionThreshold));
+    } catch (reason) {
+      setTestResult(null);
+      setTestError(reason instanceof Error ? reason.message : "模型测试失败");
+    } finally {
+      setTestLoading(false);
+    }
+  }
+
+  return (
+    <main className="check-page">
+      <section className="hero-panel">
+        <div className="topline"><p className="kicker">TYPOfix / 中文文档校验</p><nav className="top-nav"><a href="/history">历史任务</a><a href="/terms">术语库</a><a href="/guide">使用说明</a></nav></div>
+        <div className="model-test-panel">
+          <div className="model-test-heading">
+            <div><p className="eyebrow">MacBERT</p><h1>效果测试</h1></div>
+            <span className="quiet-label">原始模型输出</span>
+          </div>
+          <label className="model-test-input">
+            <span>测试文本</span>
+            <textarea value={testText} onChange={(event) => setTestText(event.target.value)} placeholder="例如：今天新情很好" />
+          </label>
+          <div className="threshold-stack">
+          <div className="model-test-threshold">
+            <span className="threshold-label"><label htmlFor="detection-threshold">检测阈值</label><button type="button" className="threshold-help-button" aria-label="检测阈值说明" aria-expanded={openThresholdTip === "detection"} onClick={() => setOpenThresholdTip((current) => current === "detection" ? null : "detection")}>?</button></span>
+            <input
+              id="detection-threshold"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={detectionThreshold}
+              onChange={(event) => setDetectionThreshold(Number(event.target.value))}
+            />
+            <output>{detectionThreshold.toFixed(2)}</output>
+            {openThresholdTip === "detection" && <span className="threshold-tip" role="tooltip">控制模型把候选标记为疑似问题的门槛；调低会提高召回率，也会带来更多候选。</span>}
+          </div>
+          <div className="model-test-threshold">
+            <span className="threshold-label"><label htmlFor="correction-threshold">纠正阈值</label><button type="button" className="threshold-help-button" aria-label="纠正阈值说明" aria-expanded={openThresholdTip === "correction"} onClick={() => setOpenThresholdTip((current) => current === "correction" ? null : "correction")}>?</button></span>
+            <input
+              id="correction-threshold"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={correctionThreshold}
+              onChange={(event) => setCorrectionThreshold(Number(event.target.value))}
+            />
+            <output>{correctionThreshold.toFixed(2)}</output>
+            {openThresholdTip === "correction" && <span className="threshold-tip" role="tooltip">控制模型建议替换的最低置信度；调高会更保守，调低会尝试修正更多问题。</span>}
+          </div>
+          </div>
+          <button className="primary-button model-test-button" disabled={!testText.trim() || testLoading} onClick={runModelTest}>
+            {testLoading ? "测试中…" : "测试模型"}
+          </button>
+          {testError && <p className="error-copy model-test-message" role="alert">{testError}</p>}
+          {testResult && <pre className="model-test-result">{JSON.stringify(testResult, null, 2)}</pre>}
+        </div>
+      </section>
+      <section className="workspace-card">
+        <div className="section-heading"><div><p className="eyebrow">01 · 选择材料</p><h2>从一份文档开始</h2></div><span className="quiet-label">仅在本机处理</span></div>
+        <FilePicker files={files} onChange={setFiles} />
+        <div className="controls-row">
+          <fieldset><legend>校验模式</legend><label><input type="radio" checked={mode === "full"} onChange={() => setMode("full")} /> 模型 + 规则</label><label><input type="radio" checked={mode === "rules_only"} onChange={() => setMode("rules_only")} /> 仅规则</label></fieldset>
+          <fieldset><legend>术语库</legend><div className="library-list">{libraries.map((library) => <label key={library.name}><input aria-label={library.name} type="checkbox" checked={selectedLibraries.includes(library.name)} onChange={(event) => setSelectedLibraries((current) => event.target.checked ? [...current, library.name] : current.filter((name) => name !== library.name))} /> {library.name}</label>)}</div></fieldset>
+        </div>
+        <button className="primary-button" disabled={!files.length} onClick={startCheck}>开始校验 <span aria-hidden="true">↗</span></button>
+        <JobProgress job={job} />
+        {error && <p className="error-copy" role="alert">{error}</p>}
+      </section>
+    </main>
+  );
+}

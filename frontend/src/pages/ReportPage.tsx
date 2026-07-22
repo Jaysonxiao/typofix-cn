@@ -1,0 +1,32 @@
+import { useEffect, useMemo, useState } from "react";
+
+import { addTermAndRematch, getReport, listTermLibraries } from "../api/client";
+import { AddTermDialog } from "../components/AddTermDialog";
+import { IssueFilters } from "../components/IssueFilters";
+import { IssueList } from "../components/IssueList";
+import { ReportSummary } from "../components/ReportSummary";
+import type { AnalysisReport, Issue, IssueCategory, IssueSource, IssueStatus, TermLibrary } from "../types";
+
+export function ReportPage({ jobId }: { jobId: string }) {
+  const [report, setReport] = useState<AnalysisReport | null>(null);
+  const [libraries, setLibraries] = useState<TermLibrary[]>([]);
+  const [category, setCategory] = useState<IssueCategory | "all">("all");
+  const [status, setStatus] = useState<IssueStatus | "all">("all");
+  const [source, setSource] = useState<IssueSource | "all">("all");
+  const [selection, setSelection] = useState<{ issue: Issue; term: string } | null>(null);
+  const [targetLibrary, setTargetLibrary] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => { Promise.all([getReport(jobId), listTermLibraries()]).then(([nextReport, nextLibraries]) => { setReport(nextReport); setLibraries(nextLibraries); setTargetLibrary(nextLibraries[0]?.name ?? ""); }).catch((reason: Error) => setError(reason.message)); }, [jobId]);
+
+  const filtered = useMemo(() => report?.issues.filter((issue) => (category === "all" || issue.category === category) && (status === "all" || issue.status === status) && (source === "all" || issue.source === source)) ?? [], [report, category, status, source]);
+
+  async function confirmTerm() {
+    if (!selection || !targetLibrary) return;
+    try { setReport(await addTermAndRematch(jobId, targetLibrary, selection.term)); setSelection(null); } catch (reason) { setError(reason instanceof Error ? reason.message : "术语添加失败"); }
+  }
+
+  if (error) return <main className="report-page"><p className="error-copy" role="alert">{error}</p></main>;
+  if (!report) return <main className="report-page"><p>正在打开报告……</p></main>;
+  return <main className="report-page"><header className="report-header"><div><p className="kicker">报告 / {report.job_id}</p><h1>问题清单</h1><p>每一条判断都保留原文上下文；青色是术语豁免，朱砂色是仍待处理。</p></div><div className="report-actions"><a className="back-link" href="/">返回首页</a><a className="download-link" href={`/api/v1/jobs/${report.job_id}/report.html`} target="_blank" rel="noreferrer">打开 HTML 报告 ↗</a><a className="download-link" href={`/api/v1/jobs/${report.job_id}/report.json`} download>下载 JSON 报告</a></div></header><ReportSummary report={report} /><IssueFilters category={category} status={status} source={source} onCategoryChange={setCategory} onStatusChange={setStatus} onSourceChange={setSource} />{filtered.length ? <IssueList issues={filtered} onSelect={(issue, term) => setSelection({ issue, term })} /> : <div className="report-empty" role="status"><strong>当前筛选条件下没有问题</strong><span>可以清空筛选，或换一个问题类型、状态或来源。</span></div>}{selection && <AddTermDialog term={selection.term} libraries={libraries} selected={targetLibrary} onChange={setTargetLibrary} onConfirm={confirmTerm} onCancel={() => setSelection(null)} />}</main>;
+}
