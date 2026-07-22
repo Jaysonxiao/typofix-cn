@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 from pydantic import BaseModel
 
 
@@ -12,8 +15,8 @@ _TERMINATORS = set("。！？!?；;")
 _CLOSERS = set("”’\"'》」』）)】〕〉】")
 
 
-def split_sentences(text: str) -> list[SentenceSpan]:
-    spans: list[SentenceSpan] = []
+def split_sentences(text: str) -> List[SentenceSpan]:
+    spans: List[SentenceSpan] = []
     start = 0
     index = 0
     cursor = 0

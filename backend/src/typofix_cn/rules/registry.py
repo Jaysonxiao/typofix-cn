@@ -1,4 +1,7 @@
-from collections.abc import Sequence
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Sequence
 
 from typofix_cn.domain.issues import Issue
 
@@ -12,7 +15,7 @@ class RuleRegistry:
     def __init__(self, rules: Sequence[Rule]) -> None:
         self._rules = tuple(rules)
 
-    def check(self, context: RuleContext) -> list[Issue]:
+    def check(self, context: RuleContext) -> List[Issue]:
         return [issue for rule in self._rules for issue in rule.check(context)]
 
 

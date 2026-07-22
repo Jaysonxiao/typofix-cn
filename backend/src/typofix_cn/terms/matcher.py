@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 import unicodedata
 
 from typofix_cn.domain.enums import IssueSource, IssueStatus
@@ -5,11 +8,11 @@ from typofix_cn.domain.issues import Issue, TermHit
 
 
 class TermMatcher:
-    def __init__(self, libraries: dict[str, list[str]]) -> None:
+    def __init__(self, libraries: Dict[str, List[str]]) -> None:
         self.libraries = libraries
 
-    def apply(self, issues: list[Issue]) -> list[Issue]:
-        result: list[Issue] = []
+    def apply(self, issues: List[Issue]) -> List[Issue]:
+        result: List[Issue] = []
         for issue in issues:
             hits = self._find_hits(issue.context)
             can_suppress = issue.source == IssueSource.MODEL and issue.type_code == "SPELLING_TYPO"
@@ -29,9 +32,9 @@ class TermMatcher:
             )
         return result
 
-    def _find_hits(self, context: str) -> list[TermHit]:
+    def _find_hits(self, context: str) -> List[TermHit]:
         normalized_context = unicodedata.normalize("NFC", context)
-        hits: list[TermHit] = []
+        hits: List[TermHit] = []
         for library, terms in self.libraries.items():
             for raw_term in terms:
                 term = unicodedata.normalize("NFC", raw_term)

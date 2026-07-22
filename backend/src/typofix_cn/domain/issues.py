@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 from typing import Optional
 import hashlib
 import json
@@ -29,7 +32,7 @@ class Issue(BaseModel):
     context: str
     confidence: Optional[float] = Field(default=None, ge=0, le=1)
     rule_code: Optional[str] = None
-    term_hits: list[TermHit] = Field(default_factory=list)
+    term_hits: List[TermHit] = Field(default_factory=list)
 
     @classmethod
     def create(cls, **values: object) -> "Issue":

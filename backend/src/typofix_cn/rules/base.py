@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 from typing import Protocol
 
 from pydantic import BaseModel
@@ -15,5 +18,5 @@ class RuleContext(BaseModel):
 class Rule(Protocol):
     code: str
 
-    def check(self, context: RuleContext) -> list[Issue]:
+    def check(self, context: RuleContext) -> List[Issue]:
         raise RuntimeError("Rule protocol method must be implemented")

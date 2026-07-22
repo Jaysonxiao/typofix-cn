@@ -31,10 +31,10 @@ class MacBertCandidateProvider:
     def available(self) -> bool:
         return bool(torch is not None and self.tokenizer is not None and self.model is not None and getattr(self.tokenizer, "is_fast", False))
 
-    def predict(self, texts: Sequence[str]) -> list[list[MacBertCandidate]]:
+    def predict(self, texts: Sequence[str]) -> List[List[MacBertCandidate]]:
         if not self.available:
             raise RuntimeError("fast tokenizer and model logits are unavailable")
-        windows: list[tuple[int, TextChunk]] = []
+        windows: List[Tuple[int, TextChunk]] = []
         for text_index, text in enumerate(texts):
             chunks = [TextChunk(text=text, start=0, end=len(text))] if len(text) <= self.max_chars else chunk_sentence(text, max_chars=self.max_chars, overlap=self.overlap)
             windows.extend((text_index, chunk) for chunk in chunks)
@@ -61,7 +61,7 @@ class MacBertCandidateProvider:
         masks = encoded.get("special_tokens_mask")
         attention = encoded.get("attention_mask")
         input_ids = encoded["input_ids"]
-        results: list[list[MacBertCandidate]] = [[] for _ in texts]
+        results: List[List[MacBertCandidate]] = [[] for _ in texts]
         for window_index, (text_index, chunk) in enumerate(windows):
             window_candidates = self._decode_window(
                 chunk,
@@ -73,7 +73,7 @@ class MacBertCandidateProvider:
             )
             results[text_index].extend(window_candidates)
         for index, candidates in enumerate(results):
-            deduped: dict[tuple[int, int], MacBertCandidate] = {}
+            deduped: Dict[Tuple[int, int], MacBertCandidate] = {}
             for candidate in candidates:
                 key = (candidate.start, candidate.end)
                 previous = deduped.get(key)
@@ -90,8 +90,8 @@ class MacBertCandidateProvider:
         offsets: torch.Tensor,
         special_tokens_mask: Optional[torch.Tensor],
         attention_mask: Optional[torch.Tensor],
-    ) -> list[MacBertCandidate]:
-        decoded: list[MacBertCandidate] = []
+    ) -> List[MacBertCandidate]:
+        decoded: List[MacBertCandidate] = []
         probabilities = torch.softmax(logits, dim=-1)
         for token_index, pair in enumerate(offsets.tolist()):
             if attention_mask is not None and not int(attention_mask[token_index]):
@@ -110,7 +110,7 @@ class MacBertCandidateProvider:
             original_id = int(input_ids[token_index])
             original_score = float(row[original_id].item())
             values, ids = torch.topk(row, k=min(self.top_k + 1, row.shape[-1]))
-            candidates: list[Candidate] = []
+            candidates: List[Candidate] = []
             if len(values) != len(ids):
                 raise ValueError("MacBERT candidate score and id counts differ")
             for value, candidate_id in zip(values.tolist(), ids.tolist()):

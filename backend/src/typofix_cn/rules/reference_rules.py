@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 import re
 
 from typofix_cn.documents.models import ExtractedBlock
@@ -7,7 +10,7 @@ from .helpers import make_issue
 
 
 class AcademicReferenceRuleSet:
-    def check_document(self, blocks: list[ExtractedBlock]):
+    def check_document(self, blocks: List[ExtractedBlock]):
         issues = []
         for label in ("图", "表"):
             targets = {
@@ -23,7 +26,7 @@ class AcademicReferenceRuleSet:
         reference_index = next((index for index, block in enumerate(blocks) if block.text.strip() == "参考文献"), len(blocks))
         body_text = "\n".join(block.text for block in blocks[:reference_index])
         cited = {int(value) for value in re.findall(r"\[(\d+)\]", body_text)}
-        entries: dict[int, ExtractedBlock] = {}
+        entries: Dict[int, ExtractedBlock] = {}
         for block in blocks[reference_index + 1 :]:
             match = re.match(r"\[(\d+)\]", block.text.strip())
             if match:

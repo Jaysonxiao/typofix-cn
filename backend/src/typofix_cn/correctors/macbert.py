@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional, Sequence
 
 from .base import CorrectionFinding, CorrectionInput, CorrectionResult
 from .confusions import ConfusionConfigError, ConfusionMatch, TextConfusionRepository
@@ -84,13 +83,13 @@ class MacBertCorrector:
         *,
         detection_threshold: float = 0.50,
         correction_threshold: float = 0.30,
-    ) -> list[CorrectionResult]:
+    ) -> List[CorrectionResult]:
         batches = self.correct_raw(
             [item.text for item in inputs],
             detection_threshold=detection_threshold,
             correction_threshold=correction_threshold,
         )
-        converted: list[CorrectionResult] = []
+        converted: List[CorrectionResult] = []
         if len(inputs) != len(batches):
             raise ModelInferenceError("MacBERT 返回数量与输入数量不一致")
         for item, raw in zip(inputs, batches):
@@ -111,10 +110,10 @@ class MacBertCorrector:
         detection_threshold: float = 0.50,
         correction_threshold: float = 0.30,
         threshold: Optional[float] = None,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         if not texts:
             return []
-        results: list[dict[str, Any]] = [
+        results: List[Dict[str, Any]] = [
             {"source": text, "target": text, "errors": [], "decisions": []} for text in texts
         ]
         eligible_indices = [index for index, text in enumerate(texts) if _CHINESE_SPAN_PATTERN.search(text)]
@@ -153,14 +152,14 @@ class MacBertCorrector:
 
     def _fallback_batch(
         self,
-        results: list[dict[str, Any]],
+        results: List[Dict[str, Any]],
         texts: Sequence[str],
         backend: Any,
-        eligible_indices: list[int],
-        confusion_matches: dict[int, list[ConfusionMatch]],
+        eligible_indices: List[int],
+        confusion_matches: Dict[int, List[ConfusionMatch]],
         threshold: float,
     ) -> None:
-        spans: list[tuple[int, int, str]] = []
+        spans: List[Tuple[int, int, str]] = []
         for text_index in eligible_indices:
             spans.extend((text_index, match.start(), match.group()) for match in _CHINESE_SPAN_PATTERN.finditer(texts[text_index]))
         try:
@@ -169,7 +168,7 @@ class MacBertCorrector:
                 raise ValueError("MacBERT 返回数量与输入片段数量不一致")
         except Exception as exc:
             raise ModelInferenceError("MacBERT 推理失败，请查看服务端日志") from exc
-        decisions_by_index: dict[int, list[CorrectionDecision]] = {index: list(_confusion_decisions(confusion_matches[index])) for index in eligible_indices}
+        decisions_by_index: Dict[int, List[CorrectionDecision]] = {index: list(_confusion_decisions(confusion_matches[index])) for index in eligible_indices}
         for (text_index, span_start, source_span), raw in zip(spans, corrected_spans):
             for error in raw.get("errors", []):
                 if not isinstance(error, (list, tuple)) or len(error) != 3:
@@ -201,9 +200,9 @@ class MacBertCorrector:
             self._set_result(results[text_index], texts[text_index], sorted(decisions_by_index[text_index], key=lambda item: item.start))
 
     @staticmethod
-    def _set_result(result: dict[str, Any], source: str, decisions: Sequence[CorrectionDecision]) -> None:
+    def _set_result(result: Dict[str, Any], source: str, decisions: Sequence[CorrectionDecision]) -> None:
         target = list(source)
-        errors: list[tuple[str, str, int]] = []
+        errors: List[Tuple[str, str, int]] = []
         for decision in sorted((item for item in decisions if item.accepted), key=lambda item: item.start):
             if not decision.suggestion or source[decision.start : decision.end] != decision.source:
                 continue
@@ -214,8 +213,8 @@ class MacBertCorrector:
         result["decisions"] = [decision.as_dict() for decision in decisions]
 
     @staticmethod
-    def _convert(item: CorrectionInput, raw: dict[str, Any]) -> CorrectionResult:
-        findings: list[CorrectionFinding] = []
+    def _convert(item: CorrectionInput, raw: Dict[str, Any]) -> CorrectionResult:
+        findings: List[CorrectionFinding] = []
         for error in raw.get("errors", []):
             if len(error) != 3:
                 continue
@@ -228,7 +227,7 @@ class MacBertCorrector:
         return CorrectionResult(key=item.key, source=item.text, findings=findings)
 
 
-def _confusion_decisions(matches: Sequence[ConfusionMatch]) -> list[CorrectionDecision]:
+def _confusion_decisions(matches: Sequence[ConfusionMatch]) -> List[CorrectionDecision]:
     return [
         CorrectionDecision(
             start=item.start,

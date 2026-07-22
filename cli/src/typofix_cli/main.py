@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 from typing import Optional
 from pathlib import Path
 
@@ -25,8 +28,8 @@ def _settings(data_dir: Optional[Path]) -> Settings:
     return settings
 
 
-def _collect(paths: list[Path]) -> list[tuple[Path, str]]:
-    result: list[tuple[Path, str]] = []
+def _collect(paths: List[Path]) -> List[Tuple[Path, str]]:
+    result: List[Tuple[Path, str]] = []
     for path in paths:
         if path.is_file() and path.suffix.lower() == ".docx" and not path.name.startswith("~$"):
             result.append((path, path.name))
@@ -39,8 +42,8 @@ def _collect(paths: list[Path]) -> list[tuple[Path, str]]:
 
 @app.command()
 def check(
-    paths: list[Path] = typer.Argument(..., exists=True),
-    term_lib: list[str] = typer.Option([], "--term-lib"),
+    paths: List[Path] = typer.Argument(..., exists=True),
+    term_lib: List[str] = typer.Option([], "--term-lib"),
     rules_only: bool = typer.Option(False, "--rules-only"),
     data_dir: Optional[Path] = typer.Option(None, "--data-dir"),
     verbose: bool = typer.Option(False, "--verbose"),

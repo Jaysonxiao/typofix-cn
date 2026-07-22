@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 import json
 import os
 import tempfile
@@ -19,10 +22,10 @@ class JobRepository:
 
     def create(
         self,
-        input_paths: list[str],
+        input_paths: List[str],
         *,
         mode: str,
-        libraries: list[str],
+        libraries: List[str],
         detection_threshold: float = 0.50,
         correction_threshold: float = 0.30,
     ) -> JobManifest:
@@ -59,7 +62,7 @@ class JobRepository:
             self._write(updated)
             return updated
 
-    def list(self) -> list[JobManifest]:
+    def list(self) -> List[JobManifest]:
         with self._lock:
             manifests = []
             for path in self.jobs_dir.glob("*/manifest.json"):

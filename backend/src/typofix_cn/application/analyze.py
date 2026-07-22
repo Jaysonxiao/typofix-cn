@@ -1,5 +1,6 @@
-from typing import Optional
-from collections.abc import Callable, Sequence
+from __future__ import annotations
+
+from typing import Callable, Dict, FrozenSet, List, Optional, Sequence, Set, Tuple
 from pathlib import Path
 
 from typofix_cn.correctors.base import CorrectionInput, Corrector
@@ -20,7 +21,7 @@ class AnalysisService:
         self,
         *,
         corrector: Corrector,
-        term_libraries: Optional[dict[str, list[str]]] = None,
+        term_libraries: Optional[Dict[str, List[str]]] = None,
         reader: Optional[DocxReader] = None,
         rules: Optional[RuleRegistry] = None,
         model_name: Optional[str] = None,
@@ -45,8 +46,8 @@ class AnalysisService:
         job_id: str = "local",
         progress: Optional[Callable[[int, int, str], None]] = None,
     ) -> AnalysisReport:
-        all_issues: list[Issue] = []
-        documents: list[DocumentResult] = []
+        all_issues: List[Issue] = []
+        documents: List[DocumentResult] = []
         total = len(paths)
         display_paths = list(relative_paths) if relative_paths is not None else [path.name for path in paths]
         if len(display_paths) != len(paths):
@@ -73,8 +74,8 @@ class AnalysisService:
             summary=summarize(issues),
         )
 
-    def _analyze_blocks(self, blocks, *, mode: str) -> list[Issue]:
-        issues: list[Issue] = []
+    def _analyze_blocks(self, blocks, *, mode: str) -> List[Issue]:
+        issues: List[Issue] = []
         for block in blocks:
             sentences = split_sentences(block.text)
             for sentence in sentences:
@@ -128,8 +129,8 @@ class AnalysisService:
         return issues
 
     @staticmethod
-    def _deduplicate(issues: list[Issue]) -> list[Issue]:
-        seen: set[str] = set()
+    def _deduplicate(issues: List[Issue]) -> List[Issue]:
+        seen: Set[str] = set()
         result = []
         for issue in issues:
             if issue.issue_id not in seen:

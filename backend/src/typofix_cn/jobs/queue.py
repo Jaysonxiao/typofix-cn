@@ -1,13 +1,12 @@
-from typing import Optional
+from typing import Callable, Optional
 import queue
 import threading
-from collections.abc import Callable
 
 
 class JobQueue:
     def __init__(self, *, worker: Callable[[object], None]) -> None:
         self._worker = worker
-        self._items: queue.Queue[Optional[object]] = queue.Queue()
+        self._items: queue.Queue = queue.Queue()
         self._thread: Optional[threading.Thread] = None
         self._stopped = threading.Event()
 

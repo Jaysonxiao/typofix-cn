@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 from collections import Counter
 from typing import Literal, Optional
 
@@ -10,7 +13,7 @@ from .issues import Issue
 class DocumentResult(BaseModel):
     document_path: str
     status: Literal["completed", "failed"]
-    issue_ids: list[str] = Field(default_factory=list)
+    issue_ids: List[str] = Field(default_factory=list)
     failure: Optional[str] = None
 
 
@@ -18,8 +21,8 @@ class ReportSummary(BaseModel):
     total: int
     actionable: int
     term_suppressed: int
-    by_category: dict[str, int]
-    by_source: dict[str, int]
+    by_category: Dict[str, int]
+    by_source: Dict[str, int]
 
 
 class AnalysisReport(BaseModel):
@@ -27,12 +30,12 @@ class AnalysisReport(BaseModel):
     job_id: str
     mode: Literal["full", "rules_only"]
     model_name: Optional[str] = None
-    documents: list[DocumentResult]
-    issues: list[Issue]
+    documents: List[DocumentResult]
+    issues: List[Issue]
     summary: ReportSummary
 
 
-def summarize(issues: list[Issue]) -> ReportSummary:
+def summarize(issues: List[Issue]) -> ReportSummary:
     return ReportSummary(
         total=len(issues),
         actionable=sum(issue.status.value == "actionable" for issue in issues),

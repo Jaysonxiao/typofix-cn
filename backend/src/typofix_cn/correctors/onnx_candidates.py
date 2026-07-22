@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Sequence
+from typing import Any, Dict, List, Sequence, Tuple
 
 import numpy as np
 
@@ -29,10 +29,10 @@ class OnnxMacBertCandidateProvider:
     def available(self) -> bool:
         return bool(self.tokenizer is not None and self.session is not None)
 
-    def predict(self, texts: Sequence[str]) -> list[list[MacBertCandidate]]:
+    def predict(self, texts: Sequence[str]) -> List[List[MacBertCandidate]]:
         if not texts:
             return []
-        windows: list[tuple[int, TextChunk]] = []
+        windows: List[Tuple[int, TextChunk]] = []
         for text_index, text in enumerate(texts):
             chunks = (
                 [TextChunk(text=text, start=0, end=len(text))]
@@ -47,12 +47,12 @@ class OnnxMacBertCandidateProvider:
         model_inputs = self._model_inputs(encodings)
         outputs = self.session.run(None, model_inputs)
         logits = self._logits(outputs)
-        results: list[list[MacBertCandidate]] = [[] for _ in texts]
+        results: List[List[MacBertCandidate]] = [[] for _ in texts]
         for window_index, (text_index, chunk) in enumerate(windows):
             results[text_index].extend(self._decode_window(chunk, encodings[window_index], logits[window_index]))
 
         for index, candidates in enumerate(results):
-            deduped: dict[tuple[int, int], MacBertCandidate] = {}
+            deduped: Dict[Tuple[int, int], MacBertCandidate] = {}
             for candidate in candidates:
                 key = (candidate.start, candidate.end)
                 previous = deduped.get(key)
@@ -61,7 +61,7 @@ class OnnxMacBertCandidateProvider:
             results[index] = sorted(deduped.values(), key=lambda item: (item.start, item.end))
         return results
 
-    def _model_inputs(self, encodings: Sequence[Any]) -> dict[str, np.ndarray]:
+    def _model_inputs(self, encodings: Sequence[Any]) -> Dict[str, np.ndarray]:
         max_length = max(len(encoding.ids) for encoding in encodings)
         input_ids = np.zeros((len(encodings), max_length), dtype=np.int64)
         attention_mask = np.zeros((len(encodings), max_length), dtype=np.int64)
@@ -87,14 +87,14 @@ class OnnxMacBertCandidateProvider:
                 return array
         raise ValueError("MacBERT ONNX logits must have shape [batch, sequence, vocabulary]")
 
-    def _decode_window(self, chunk: TextChunk, encoding: Any, logits: np.ndarray) -> list[MacBertCandidate]:
+    def _decode_window(self, chunk: TextChunk, encoding: Any, logits: np.ndarray) -> List[MacBertCandidate]:
         if logits.shape[0] < len(encoding.ids):
             raise ValueError("MacBERT ONNX sequence length does not match tokenizer output")
         # Batched ONNX inference pads every row to the longest sequence. The
         # tokenizer encoding still has the unpadded length for this window.
         logits = logits[: len(encoding.ids)]
         probabilities = self._softmax(logits)
-        decoded: list[MacBertCandidate] = []
+        decoded: List[MacBertCandidate] = []
         for token_index, pair in enumerate(encoding.offsets):
             if not int(encoding.attention_mask[token_index]) or int(encoding.special_tokens_mask[token_index]):
                 continue
@@ -107,7 +107,7 @@ class OnnxMacBertCandidateProvider:
             absolute_start = chunk.start + token_start
             row = probabilities[token_index]
             original_id = int(encoding.ids[token_index])
-            candidates: list[Candidate] = []
+            candidates: List[Candidate] = []
             for candidate_id in np.argsort(row)[::-1][: self.top_k + 1].tolist():
                 candidate_text = self._decode_token(int(candidate_id))
                 if candidate_text == source or not _HAN_ONLY.fullmatch(candidate_text):

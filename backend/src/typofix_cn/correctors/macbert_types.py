@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Tuple
 
 
 @dataclass(frozen=True)
@@ -15,4 +16,4 @@ class MacBertCandidate:
     end: int
     source: str
     original_score: float
-    candidates: tuple[Candidate, ...]
+    candidates: Tuple[Candidate, ...]

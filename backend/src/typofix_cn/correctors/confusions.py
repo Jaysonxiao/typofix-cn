@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Dict, FrozenSet, List, Set, Tuple
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,10 +35,10 @@ class TextConfusionRepository:
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
 
-    def rules(self) -> tuple[ConfusionRule, ...]:
+    def rules(self) -> Tuple[ConfusionRule, ...]:
         if not self.path.exists():
             return ()
-        by_source: dict[str, ConfusionRule] = {}
+        by_source: Dict[str, ConfusionRule] = {}
         for line_number, raw_line in enumerate(self.path.read_text(encoding="utf-8").splitlines(), start=1):
             line = raw_line.strip()
             if not line or line.startswith("#"):
@@ -61,9 +62,9 @@ class TextConfusionRepository:
             by_source[source] = ConfusionRule(source=source, target=target, line_number=line_number)
         return tuple(by_source.values())
 
-    def match(self, text: str) -> list[ConfusionMatch]:
+    def match(self, text: str) -> List[ConfusionMatch]:
         rules = self.rules()
-        matches: list[ConfusionMatch] = []
+        matches: List[ConfusionMatch] = []
         index = 0
         while index < len(text):
             candidates = [rule for rule in rules if text.startswith(rule.source, index)]

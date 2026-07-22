@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 import hashlib
 import os
 import re
@@ -28,7 +31,7 @@ class TextTermRepository:
         self._validate_name(name)
         return self.root / f"{name}.txt"
 
-    def list(self) -> list[TermLibrary]:
+    def list(self) -> List[TermLibrary]:
         return [self.load(path.stem) for path in sorted(self.root.glob("*.txt"))]
 
     def create(self, name: str) -> TermLibrary:
@@ -43,8 +46,8 @@ class TextTermRepository:
         if not path.exists():
             raise FileNotFoundError(f"术语库不存在：{name}")
         raw = path.read_text(encoding="utf-8-sig")
-        terms: list[str] = []
-        seen: set[str] = set()
+        terms: List[str] = []
+        seen: Set[str] = set()
         for line in raw.splitlines():
             term = line.strip()
             if not term or term.startswith("#") or term in seen:

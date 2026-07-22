@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 from typing import Optional
 import re
 from collections import Counter
@@ -17,7 +20,7 @@ def _level(block: ExtractedBlock) -> Optional[int]:
 
 
 class StructureRuleSet:
-    def check_document(self, blocks: list[ExtractedBlock]):
+    def check_document(self, blocks: List[ExtractedBlock]):
         issues = []
         headings = [block for block in blocks if block.role == "heading"]
         levels = [_level(block) for block in headings]

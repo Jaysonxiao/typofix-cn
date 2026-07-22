@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 import json
 import re
 import time
@@ -110,7 +113,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         return {"status": "ok", "model_name": settings.model_name}
 
     @app.post("/api/v1/macbert/test")
-    def test_macbert(payload: MacBertTestRequest) -> dict[str, Any]:
+    def test_macbert(payload: MacBertTestRequest) -> Dict[str, Any]:
         if not payload.text.strip():
             raise HTTPException(status_code=422, detail={"code": "EMPTY_TEXT", "message": "请输入要测试的文本"})
         try:
@@ -126,7 +129,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
 
     @app.post("/api/v1/jobs", status_code=202)
     async def create_job(
-        files: list[UploadFile] = File(...),
+        files: List[UploadFile] = File(...),
         mode: str = Form("full"),
         term_libraries: str = Form(""),
         detection_threshold: float = Form(0.50, ge=0.0, le=1.0),

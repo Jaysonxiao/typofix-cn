@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 from pathlib import Path
 from typing import Iterator, Optional, Union
 
@@ -36,7 +39,7 @@ def _format_value(value: object) -> Optional[float]:
 
 
 class DocxReader:
-    def read(self, path: Path, *, relative_path: str) -> list[ExtractedBlock]:
+    def read(self, path: Path, *, relative_path: str) -> List[ExtractedBlock]:
         if path.suffix.lower() != ".docx":
             raise UnsupportedDocxError(f"仅支持 DOCX 文件：{relative_path}")
         try:
@@ -44,7 +47,7 @@ class DocxReader:
         except Exception as exc:  # python-docx raises several parser-specific exceptions
             raise InvalidDocxError(f"无法读取 DOCX 文件：{relative_path}") from exc
 
-        blocks: list[ExtractedBlock] = []
+        blocks: List[ExtractedBlock] = []
         paragraph_index = 0
         table_index = 0
         for item in _iter_block_items(document):

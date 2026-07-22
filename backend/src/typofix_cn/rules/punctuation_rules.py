@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
 import re
 
 from .base import RuleContext
@@ -18,7 +21,7 @@ class PunctuationRule:
             issues.append(
                 make_issue(context, type_code="PUNCTUATION_DUPLICATE", start=match.start(), end=match.end(), message="标点符号重复")
             )
-        stack: list[tuple[str, int]] = []
+        stack: List[Tuple[str, int]] = []
         for index, char in enumerate(text):
             if char in self._pairs:
                 stack.append((char, index))

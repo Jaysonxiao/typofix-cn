@@ -19,9 +19,9 @@ class CorrectionDecision:
     detection_score: Optional[float]
     accepted: bool
     reason: str
-    candidates: tuple[Candidate, ...] = ()
+    candidates: Tuple[Candidate, ...] = ()
 
-    def as_dict(self) -> dict[str, Any]:
+    def as_dict(self) -> Dict[str, Any]:
         return {
             "start": self.start,
             "end": self.end,
@@ -44,7 +44,7 @@ def build_decisions(
     *,
     detection_threshold: float = 0.50,
     correction_threshold: float = 0.30,
-) -> list[CorrectionDecision]:
+) -> List[CorrectionDecision]:
     confusion_decisions = [
         CorrectionDecision(
             start=item.start,
@@ -61,7 +61,7 @@ def build_decisions(
         for item in confusion_matches
     ]
     accepted_ranges = [(item.start, item.end) for item in confusion_decisions]
-    model_decisions: list[CorrectionDecision] = []
+    model_decisions: List[CorrectionDecision] = []
     for item in model_candidates:
         if any(item.start < end and item.end > start for start, end in accepted_ranges):
             continue

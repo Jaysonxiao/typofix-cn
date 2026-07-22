@@ -1,5 +1,7 @@
-from collections.abc import Sequence
-from typing import Protocol, Optional
+from __future__ import annotations
+
+from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Optional, Protocol, Sequence
 
 from pydantic import BaseModel
 
@@ -20,7 +22,7 @@ class CorrectionFinding(BaseModel):
 class CorrectionResult(BaseModel):
     key: str
     source: str
-    findings: list[CorrectionFinding]
+    findings: List[CorrectionFinding]
 
 
 class Corrector(Protocol):
@@ -30,5 +32,5 @@ class Corrector(Protocol):
         *,
         detection_threshold: float = 0.50,
         correction_threshold: float = 0.30,
-    ) -> list[CorrectionResult]:
+    ) -> List[CorrectionResult]:
         raise RuntimeError("Corrector protocol method must be implemented")
