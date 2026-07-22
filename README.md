@@ -178,16 +178,16 @@ uv run typofix serve --data-dir .\data
 
 规则-only 的轻量部署可以省略 `--extra model` 和模型下载，并在 Web 页面选择“仅规则”。
 
-## 8. 麒麟 ARM / 离线打包说明
+## 8. ARM / 离线打包说明
 
-当前仓库没有承诺一个跨 Windows、macOS、麒麟 ARM 的单文件安装包。规则模式只依赖通用 Python wheels，可以先执行：
+当前仓库没有承诺一个跨 Windows、macOS、 ARM 的单文件安装包。规则模式只依赖通用 Python wheels，可以先执行：
 
 ```bash
 uv sync --extra dev
 uv run typofix check ./test.docx --rules-only --data-dir ./data
 ```
 
-完整模型模式还需要目标平台可用的 PyTorch、`pycorrector`、Transformers 和模型权重。麒麟 ARM 上应先在目标设备验证：
+完整模型模式还需要目标平台可用的 PyTorch、`pycorrector`、Transformers 和模型权重。 ARM 上应先在目标设备验证：
 
 ```bash
 uv sync --extra model
